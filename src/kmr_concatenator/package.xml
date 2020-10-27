@@ -8,18 +8,33 @@
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>rclpy</depend>
+  
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 
   <depend>pcl_conversions</depend>
   <depend>laser_geometry</depend>
-  <depend>rclpy</depend>
   <depend>std_msgs</depend>
+  <depend>angles</depend>
+  <depend>boost</depend>
+  <depend>eigen</depend>
+  <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
+  <depend>tf</depend>
   <depend>tf2</depend>
-  <depend>tf2_ros</depend>
-  <depend>tf2_msgs</depend>
 
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
+  <build_depend>tf2_geometry_msgs</build_depend>
+  
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-struct</exec_depend>
+  
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>
     <build_type>ament_cmake</build_type>

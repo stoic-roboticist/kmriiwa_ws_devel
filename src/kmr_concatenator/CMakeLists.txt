@@ -17,14 +17,27 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
+
 find_package(laser_geometry REQUIRED)
 find_package(pcl_conversions REQUIRED)
+
 find_package(rclpy REQUIRED)
+find_package(rclcpp REQUIRED)
+
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_msgs REQUIRED)
+
+find_package(eigen3_cmake_module REQUIRED)
+find_package(Eigen3 REQUIRED)
+
+# Install the python module for this package
+ament_python_install_package(script/)
+ament_python_install_package(nodes/)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -37,14 +50,16 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+
+
 install(
-  DIRECTORY launch
+  DIRECTORY launch script
   DESTINATION share/${PROJECT_NAME}
 )
 
-install(
-  PROGRAMS
-    nodes/laserscan_converter_node.py
+install(PROGRAMS
+    script/scan_to_pointcloud2.py
+    nodes/concatenator_node.py
     DESTINATION lib/${PROJECT_NAME}
 )
 
