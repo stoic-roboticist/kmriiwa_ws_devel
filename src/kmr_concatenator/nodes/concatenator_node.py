@@ -19,57 +19,92 @@ import sys
 import argparse
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.utilities import remove_ros_args
+import time
 
+# rclpy and math
 import rclpy
 import numpy as np
+from rclpy.node import Node
 
+# For transforming LaserScan to PointCloud2
 import struct
 import ctypes
 
-from rclpy.node import Node
-
+# Messages
 from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan, PointCloud2, PointField
 import std_msgs
 
+# Packages to transform pointcloud
+import tf2_ros
+import launch_ros.actions
 
+
+
+# Message syncronization
 from message_filters import Subscriber, ApproximateTimeSynchronizer
+
 
 
 
 class LaserConcatenator(Node):
 
-	def __init__(self):
-		super().__init__('laser_concatenator')
-		self.name = 'laser_concatenator'
+    def __init__(self):
+        super().__init__('laser_concatenator')
+        self.name = 'laser_concatenator'
 
-		self.publisher_ = self.create_publisher(PointCloud2, 'pc_concatenated', 10)
+        node = rclpy.create_node('tf_listener')
 
-		# Make a LaserProjection object
-		self.lp = LaserProjection()
+        # Create publisher to publish final pointcloud
+        self.publisher_ = self.create_publisher(PointCloud2, 'pc_concatenated', 10)
 
-		# Subscribes to the two laser scan topics. Might have to change QoS to 10 when subscribing to real laser readings.
-		self.subscriber_1 = Subscriber(self, LaserScan, 'scan', qos_profile = rclpy.qos.qos_profile_sensor_data)
-		self.subscriber_2 = Subscriber(self, LaserScan, 'scan_2', qos_profile = rclpy.qos.qos_profile_sensor_data)
+        # Make a LaserProjection object
+        self.lp = LaserProjection()
 
-		# Syncronizes messages from the two laser scanner topics when messages are less than 0.1 seconds apart.
-		self.syncronizer = ApproximateTimeSynchronizer([self.subscriber_1, self.subscriber_2], 10, 0.1, allow_headerless=False)
+        # Setup for performing PointCloud2 transforms
+        print('Initializing TF buffer and listener.')
+        self.tf_buffer = tf2_ros.Buffer(None, node = node)
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, node, spin_thread = False)
 
-		print('Initialized laser scan syncronizer.')
-		
-		# Calling callback function when syncronized messages are received.
-		self.syncronizer.registerCallback(self.callback)
+        executor = rclpy.executors.SingleThreadedExecutor()
+        executor.add_node(node)
+
+        # Listen to TF for 5 seconds
+        start_time = time.time()
+        print('Listening to tf for 5 seconds.')
+        while (time.time() - start_time < 5.0):
+            rclpy.spin_once(node, timeout_sec=0.1)
+
+        try:
+            self.transform_B1 = self.tf_buffer.lookup_transform("base_link","laser_B1_link", node.get_clock().now())
+            print('Got B1 transform.')
+            self.transform_B4 = self.tf_buffer.lookup_transform("base_link","laser_B4_link", node.get_clock().now())
+            print('Got B4 transform.')
+
+        except tf2_ros.LookupException as e:
+            print('Error looking up transform:', e, '')
+
+        # Subscribes to the two laser scan topics. Might have to change QoS to 10 when subscribing to real laser readings.
+        self.subscriber_1 = Subscriber(self, LaserScan, 'scan', qos_profile = rclpy.qos.qos_profile_sensor_data)
+        self.subscriber_2 = Subscriber(self, LaserScan, 'scan_2', qos_profile = rclpy.qos.qos_profile_sensor_data)
+
+        # Syncronizes messages from the two laser scanner topics when messages are less than 0.1 seconds apart.
+        self.syncronizer = ApproximateTimeSynchronizer([self.subscriber_1, self.subscriber_2], 10, 0.1, allow_headerless=False)
+
+        print('Initialized laser scan syncronizer.')
+        
+        # Calling callback function when syncronized messages are received.
+        self.syncronizer.registerCallback(self.callback)
 
 
-	def callback(self, scan, scan2):
-		# Insert frame transform here
+    def callback(self, scan, scan2):
+        # Insert frame transform here
 
 
-		# Make two PointCloud2 messages from the scans
-		pc2_msg1 = self.lp.projectLaser(scan)
-		pc2_msg2 = self.lp.projectLaser(scan2)
+        # Make two PointCloud2 messages from the scans
+        pc2_msg1 = self.lp.projectLaser(scan)
+        pc2_msg2 = self.lp.projectLaser(scan2)
 
-		print(pc2_msg1.header)
 
 # Class for creating PointCloud2 messages from LaserScan messages
 
@@ -263,56 +298,134 @@ class LaserProjection():
         return cloud_out
 
     def create_cloud(self, header, fields, points):
-    	"""
-    	Create a L{sensor_msgs.msg.PointCloud2} message.
-    	@param header: The point cloud header.
-    	@type  header: L{std_msgs.msg.Header}
-    	@param fields: The point cloud fields.
-    	@type  fields: iterable of L{sensor_msgs.msg.PointField}
-    	@param points: The point cloud points.
-    	@type  points: list of iterables, i.e. one iterable for each point, with the
-    	               elements of each iterable being the values of the fields for 
-    	               that point (in the same order as the fields parameter)
-    	@return: The point cloud.
-    	@rtype:  L{sensor_msgs.msg.PointCloud2}
-    	"""
+        """
+        Create a L{sensor_msgs.msg.PointCloud2} message.
+        @param header: The point cloud header.
+        @type  header: L{std_msgs.msg.Header}
+        @param fields: The point cloud fields.
+        @type  fields: iterable of L{sensor_msgs.msg.PointField}
+        @param points: The point cloud points.
+        @type  points: list of iterables, i.e. one iterable for each point, with the
+                       elements of each iterable being the values of the fields for 
+                       that point (in the same order as the fields parameter)
+        @return: The point cloud.
+        @rtype:  L{sensor_msgs.msg.PointCloud2}
+        """
 
-    	cloud_struct = struct.Struct(self._get_struct_fmt(False, fields))
+        cloud_struct = struct.Struct(self._get_struct_fmt(False, fields))
 
-    	buff = ctypes.create_string_buffer(cloud_struct.size * len(points))
+        buff = ctypes.create_string_buffer(cloud_struct.size * len(points))
 
-    	point_step, pack_into = cloud_struct.size, cloud_struct.pack_into
-    	offset = 0
-    	for p in points:
-    	    pack_into(buff, offset, *p)
-    	    offset += point_step
+        point_step, pack_into = cloud_struct.size, cloud_struct.pack_into
+        offset = 0
+        for p in points:
+            pack_into(buff, offset, *p)
+            offset += point_step
 
-    	return PointCloud2(header=header,
-        	               height=1,
-        	               width=len(points),
-        	               is_dense=False,
-        	               is_bigendian=False,
-        	               fields=fields,
-        	               point_step=cloud_struct.size,
-        	               row_step=cloud_struct.size * len(points),
-        	               data=buff.raw)
+        return PointCloud2(header=header,
+                           height=1,
+                           width=len(points),
+                           is_dense=False,
+                           is_bigendian=False,
+                           fields=fields,
+                           point_step=cloud_struct.size,
+                           row_step=cloud_struct.size * len(points),
+                           data=buff.raw)
 
     def _get_struct_fmt(self, is_bigendian, fields, field_names=None):
-    	fmt = '>' if is_bigendian else '<'
+        fmt = '>' if is_bigendian else '<'
 
-    	offset = 0
-    	for field in (f for f in sorted(fields, key=lambda f: f.offset) if field_names is None or f.name in field_names):
-    	    if offset < field.offset:
-    	        fmt += 'x' * (field.offset - offset)
-    	        offset = field.offset
-    	    if field.datatype not in self._DATATYPES:
-    	        print('Skipping unknown PointField datatype [%d]' % field.datatype, file=sys.stderr)
-    	    else:
-    	        datatype_fmt, datatype_length = self._DATATYPES[field.datatype]
-    	        fmt    += field.count * datatype_fmt
-    	        offset += field.count * datatype_length
+        offset = 0
+        for field in (f for f in sorted(fields, key=lambda f: f.offset) if field_names is None or f.name in field_names):
+            if offset < field.offset:
+                fmt += 'x' * (field.offset - offset)
+                offset = field.offset
+            if field.datatype not in self._DATATYPES:
+                print('Skipping unknown PointField datatype [%d]' % field.datatype, file=sys.stderr)
+            else:
+                datatype_fmt, datatype_length = self._DATATYPES[field.datatype]
+                fmt    += field.count * datatype_fmt
+                offset += field.count * datatype_length
 
-    	return fmt
+        return fmt
+
+    def read_points(cloud, field_names=None, skip_nans=False, uvs=[]):
+        """
+        Read points from a L{sensor_msgs.PointCloud2} message.
+        @param cloud: The point cloud to read from.
+        @type  cloud: L{sensor_msgs.PointCloud2}
+        @param field_names: The names of fields to read. If None, read all fields. [default: None]
+        @type  field_names: iterable
+        @param skip_nans: If True, then don't return any point with a NaN value.
+        @type  skip_nans: bool [default: False]
+        @param uvs: If specified, then only return the points at the given coordinates. [default: empty list]
+        @type  uvs: iterable
+        @return: Generator which yields a list of values for each point.
+        @rtype:  generator
+        """
+        assert isinstance(cloud, roslib.message.Message) and cloud._type == 'sensor_msgs/PointCloud2', 'cloud is not a sensor_msgs.msg.PointCloud2'
+        fmt = _get_struct_fmt(cloud.is_bigendian, cloud.fields, field_names)
+        width, height, point_step, row_step, data, isnan = cloud.width, cloud.height, cloud.point_step, cloud.row_step, cloud.data, math.isnan
+        unpack_from = struct.Struct(fmt).unpack_from
+
+        if skip_nans:
+            if uvs:
+                for u, v in uvs:
+                    p = unpack_from(data, (row_step * v) + (point_step * u))
+                    has_nan = False
+                    for pv in p:
+                        if isnan(pv):
+                            has_nan = True
+                            break
+                        if not has_nan:
+                            yield p
+            else:
+                for v in xrange(height):
+                    offset = row_step * v
+                    for u in xrange(width):
+                        p = unpack_from(data, offset)
+                        has_nan = False
+                        for pv in p:
+                            if isnan(pv):
+                                has_nan = True
+                                break
+                            if not has_nan:
+                                yield p
+                        offset += point_step
+        else:   
+            if uvs:
+                for u, v in uvs:
+                    yield unpack_from(data, (row_step * v) + (point_step * u))
+            else:
+                for v in xrange(height):
+                    offset = row_step * v
+                    for u in xrange(width):
+                        yield unpack_from(data, offset)
+                        offset += point_step
+
+
+
+class CloudTransform():
+    '''def transform_to_kdl(self, t):
+        return PyKDL.Frame(PyKDL.Rotation.Quaternion(t.transform.rotation.x, t.transform.rotation.y,
+                                                     t.transform.rotation.z, t.transform.rotation.w),
+                            PyKDL.Vector(t.transform.translation.x, 
+                                        t.transform.translation.y, 
+                                        t.transform.translation.z))'''
+
+    # PointStamped
+    def do_transform_cloud(self, cloud, transform):
+        t_kdl = transform_to_kdl(transform)
+        points_out = []
+        for p_in in LaserProjection().read_points(cloud):
+            p_out = t_kdl * PyKDL.Vector(p_in[0], p_in[1], p_in[2])
+            points_out.append(p_out)
+        res = LaserProjection().create_cloud(transform.header, cloud.fields, points_out)
+        return res
+
+    def Quaternion_from_transform(self, transform):
+        a = 0
+
 
 
 

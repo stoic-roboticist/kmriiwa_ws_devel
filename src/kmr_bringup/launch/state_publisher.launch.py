@@ -27,7 +27,7 @@ import launch_ros.actions
 def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
 
-    urdf_file_name = 'kmriiwa.urdf'
+    urdf_file_name = 'kmriiwa_withcameraframes.urdf'
     urdf = os.path.join(
         get_package_share_directory('kmr_bringup'),
         'urdf',
