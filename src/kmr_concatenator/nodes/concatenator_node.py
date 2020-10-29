@@ -105,13 +105,16 @@ class LaserConcatenator(Node):
 
         # Insert frame transform here
         self.pc2_msg1_transformed = CloudTransform().do_transform_cloud(self.pc2_msg1, self.transform_B1)
+        print(self.pc2_msg1_transformed.fields)
         self.pc2_msg2_transformed = CloudTransform().do_transform_cloud(self.pc2_msg2, self.transform_B4)
 
+        #pc2_concatenated = LaserProjection.concatenate_clouds(self.pc2_msg1_transformed, self.pc2_msg2_transformed)
+
         # Publishes the translated pointclouds.
-        self.publisher_.publish(self.pc2_msg1_transformed)
-        time.sleep(0.25)
-        self.publisher_.publish(self.pc2_msg2_transformed)
-        time.sleep(0.25)
+        #self.publisher_.publish(self.pc2_msg1_transformed)
+        #time.sleep(0.25)
+        #self.publisher_.publish(self.pc2_msg2_transformed)
+        #time.sleep(0.25)
 
 
 def main(argv=sys.argv[1:]):
@@ -322,6 +325,28 @@ class LaserProjection:
         cloud_out = self.create_cloud(scan_in.header, fields, points)
 
         return cloud_out
+
+
+    def concatenate_clouds(self, cloud1, cloud2):
+        '''
+        This requires 2 clouds in the same frame.
+        '''
+        points_1 = self.read_points(cloud1)
+        points_2 = self.read_points(cloud2)
+
+        points_concatenated = []
+
+        for point in points_1:
+            points_concatenated.append(point)
+
+        for point in points_2:
+            points_concatenated.append(point)
+
+        fields = 0
+
+
+        concatenated_cloud = create_cloud(cloud1.header, cloud1)
+
 
     def create_cloud(self, header, fields, points):
         """
