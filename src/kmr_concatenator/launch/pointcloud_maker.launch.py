@@ -45,4 +45,13 @@ def generate_launch_description(argv=sys.argv[1:]):
             output="screen",
             emulate_tty = True,
            ),
+        launch_ros.actions.Node(
+            package="pointcloud_to_laserscan",
+            executable="pointcloud_to_laserscan_node",
+            name="pointcloud_to_laserscan",
+            output="screen",
+            parameters=[{'use_sim_time': True}],
+            remappings=[('cloud_in', 'pc'),
+                        ('scan', 'scan_concatenated')]
+            )
     ])

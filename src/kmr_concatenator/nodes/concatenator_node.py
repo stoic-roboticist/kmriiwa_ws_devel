@@ -24,6 +24,7 @@ import time
 # rclpy and math
 import rclpy
 import numpy as np
+import math
 from rclpy.node import Node
 
 # For transforming LaserScan to PointCloud2
@@ -38,8 +39,6 @@ import std_msgs
 # Packages to transform pointcloud
 import tf2_ros
 import launch_ros.actions
-
-
 
 # Message syncronization
 from message_filters import Subscriber, ApproximateTimeSynchronizer
@@ -56,7 +55,7 @@ class LaserConcatenator(Node):
         node = rclpy.create_node('tf_listener')
 
         # Create publisher to publish final pointcloud
-        self.publisher_ = self.create_publisher(PointCloud2, 'pc_concatenated', 10)
+        self.publisher_ = self.create_publisher(PointCloud2, 'pc', 10)
 
         # Make a LaserProjection object
         self.lp = LaserProjection()
@@ -71,8 +70,8 @@ class LaserConcatenator(Node):
 
         # Listen to TF for 5 seconds
         start_time = time.time()
-        print('Listening to tf for 5 seconds.')
-        while (time.time() - start_time < 5.0):
+        print('Listening to /tf and /tf_static for 3 seconds.')
+        while (time.time() - start_time < 3.0):
             rclpy.spin_once(node, timeout_sec=0.1)
 
         try:
@@ -82,7 +81,9 @@ class LaserConcatenator(Node):
             print('Got B4 transform.')
 
         except tf2_ros.LookupException as e:
-            print('Error looking up transform:', e, '')
+            print('Error looking up transform:', e, 'Did you remember to launch the joint publisher from kmr_bringup?')
+            print('Shutting down.')
+            rclpy.shutdown()
 
         # Subscribes to the two laser scan topics. Might have to change QoS to 10 when subscribing to real laser readings.
         self.subscriber_1 = Subscriber(self, LaserScan, 'scan', qos_profile = rclpy.qos.qos_profile_sensor_data)
@@ -98,17 +99,42 @@ class LaserConcatenator(Node):
 
 
     def callback(self, scan, scan2):
-        # Insert frame transform here
-
-
         # Make two PointCloud2 messages from the scans
-        pc2_msg1 = self.lp.projectLaser(scan)
-        pc2_msg2 = self.lp.projectLaser(scan2)
+        self.pc2_msg1 = self.lp.projectLaser(scan)
+        self.pc2_msg2 = self.lp.projectLaser(scan2)
 
+        # Insert frame transform here
+        self.pc2_msg1_transformed = CloudTransform().do_transform_cloud(self.pc2_msg1, self.transform_B1)
+        self.pc2_msg2_transformed = CloudTransform().do_transform_cloud(self.pc2_msg2, self.transform_B4)
+
+        # Publishes the translated pointclouds.
+        self.publisher_.publish(self.pc2_msg1_transformed)
+        time.sleep(0.25)
+        self.publisher_.publish(self.pc2_msg2_transformed)
+        time.sleep(0.25)
+
+
+def main(argv=sys.argv[1:]):
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    args = parser.parse_args(remove_ros_args(args=argv))
+    rclpy.init(args=argv)
+    concatenator_node = LaserConcatenator()
+
+    rclpy.spin(concatenator_node)
+
+    try:
+        concatenator_node.destroy_node()
+        rclpy.shutdown()
+    except:
+        print("Error: rclpy shutdown failed")
+
+
+
+###################################################################################################################################################################################
 
 # Class for creating PointCloud2 messages from LaserScan messages
 
-class LaserProjection():
+class LaserProjection:
 
     LASER_SCAN_INVALID   = -1.0
     LASER_SCAN_MIN_RANGE = -2.0
@@ -349,7 +375,7 @@ class LaserProjection():
 
         return fmt
 
-    def read_points(cloud, field_names=None, skip_nans=False, uvs=[]):
+    def read_points(self, cloud, field_names=None, skip_nans=False, uvs=[]):
         """
         Read points from a L{sensor_msgs.PointCloud2} message.
         @param cloud: The point cloud to read from.
@@ -363,8 +389,8 @@ class LaserProjection():
         @return: Generator which yields a list of values for each point.
         @rtype:  generator
         """
-        assert isinstance(cloud, roslib.message.Message) and cloud._type == 'sensor_msgs/PointCloud2', 'cloud is not a sensor_msgs.msg.PointCloud2'
-        fmt = _get_struct_fmt(cloud.is_bigendian, cloud.fields, field_names)
+        #assert isinstance(cloud, roslib.message.Message) and cloud._type == 'sensor_msgs/PointCloud2', 'cloud is not a sensor_msgs.msg.PointCloud2'
+        fmt = self._get_struct_fmt(cloud.is_bigendian, cloud.fields, field_names)
         width, height, point_step, row_step, data, isnan = cloud.width, cloud.height, cloud.point_step, cloud.row_step, cloud.data, math.isnan
         unpack_from = struct.Struct(fmt).unpack_from
 
@@ -380,9 +406,9 @@ class LaserProjection():
                         if not has_nan:
                             yield p
             else:
-                for v in xrange(height):
+                for v in range(height):
                     offset = row_step * v
-                    for u in xrange(width):
+                    for u in range(width):
                         p = unpack_from(data, offset)
                         has_nan = False
                         for pv in p:
@@ -397,50 +423,41 @@ class LaserProjection():
                 for u, v in uvs:
                     yield unpack_from(data, (row_step * v) + (point_step * u))
             else:
-                for v in xrange(height):
+                for v in range(height):
                     offset = row_step * v
-                    for u in xrange(width):
+                    for u in range(width):
                         yield unpack_from(data, offset)
                         offset += point_step
 
 
 
 class CloudTransform():
-    '''def transform_to_kdl(self, t):
-        return PyKDL.Frame(PyKDL.Rotation.Quaternion(t.transform.rotation.x, t.transform.rotation.y,
-                                                     t.transform.rotation.z, t.transform.rotation.w),
-                            PyKDL.Vector(t.transform.translation.x, 
-                                        t.transform.translation.y, 
-                                        t.transform.translation.z))'''
+    def transform_to_quat_vec(self, t):
+        q = np.array([t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z, t.transform.rotation.w])
+        v = np.array([t.transform.translation.x, t.transform.translation.y, t.transform.translation.z])
+        qv = [q,v]
+        return qv
 
     # PointStamped
     def do_transform_cloud(self, cloud, transform):
-        t_kdl = transform_to_kdl(transform)
+        qv = self.transform_to_quat_vec(transform)
+
         points_out = []
+
+        q = qv[0]
+        C = np.array([[q[1]**2 + q[2]**2 - q[3]**2 - q[0]**2, 2*(q[2]*q[3] - q[1]*q[0]), 2*(q[2]*q[0] + q[1]*q[3])],
+                      [2*(q[2]*q[3] + q[1]*q[0]), q[1]**2 - q[2]**2 + q[3]**2 - q[0]**2, 2*(q[3]*q[0] - q[1]*q[2])],
+                      [2*(q[2]*q[0] - q[1]*q[3]), 2*(q[3]*q[0] + q[1]*q[2]), q[1]**2 - q[2]**2 - q[3]**2 + q[0]**2]])
+
         for p_in in LaserProjection().read_points(cloud):
-            p_out = t_kdl * PyKDL.Vector(p_in[0], p_in[1], p_in[2])
+            p_out = np.array((C @ np.array([p_in[0], p_in[1], p_in[2]])) + qv[1])
+            p_out = [p_out[0], p_out[1], p_out[2], 0.0, p_in[4]]
             points_out.append(p_out)
+
         res = LaserProjection().create_cloud(transform.header, cloud.fields, points_out)
         return res
 
-    def Quaternion_from_transform(self, transform):
-        a = 0
-
-
-
-
-def main(argv=sys.argv[1:]):
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    args = parser.parse_args(remove_ros_args(args=argv))
-    rclpy.init(args=argv)
-    concatenator_node = LaserConcatenator()
-
-    rclpy.spin(concatenator_node)
-    try:
-        concatenator_node.destroy_node()
-        rclpy.shutdown()
-    except:
-        print("Error: rclpy shutdown failed")
+###################################################################################################################################################################################
 
 
 if __name__ == '__main__':
