@@ -55,7 +55,7 @@ class LaserConcatenator(Node):
         node = rclpy.create_node('tf_listener')
 
         # Create publisher to publish final pointcloud
-        self.publisher_ = self.create_publisher(PointCloud2, 'pc_concatenated', rclpy.qos.qos_profile_sensor_data)
+        self.publisher_ = self.create_publisher(PointCloud2, 'pc_concatenated', qos_profile = rclpy.qos.qos_profile_sensor_data)
 
         # Make a LaserProjection object
         self.lp = LaserProjection()
@@ -107,9 +107,8 @@ class LaserConcatenator(Node):
         self.pc2_msg1_transformed = PointCloud2()
         self.pc2_msg2_transformed = PointCloud2()
 
-        self.pc2_msg1_transformed = CloudTransform().do_transform_cloud(self.pc2_msg1, self.transform_B1)
-        
-        self.pc2_msg2_transformed = CloudTransform().do_transform_cloud(self.pc2_msg2, self.transform_B4)
+        self.pc2_msg1_transformed = CloudTransform().do_transform_cloud(self.pc2_msg1, self.transform_B1, scan)
+        self.pc2_msg2_transformed = CloudTransform().do_transform_cloud(self.pc2_msg2, self.transform_B4, scan)
 
         # Combine the clouds
         if ((len(self.pc2_msg1_transformed.data) != 0) & (len(self.pc2_msg2_transformed.data) != 0)):
@@ -475,7 +474,7 @@ class CloudTransform():
         return qv
 
     # PointStamped
-    def do_transform_cloud(self, cloud, transform):
+    def do_transform_cloud(self, cloud, transform, original_scan):
         qv = self.transform_to_quat_vec(transform)
 
         points_out = []
@@ -490,7 +489,7 @@ class CloudTransform():
             p_out = [p_out[0], p_out[1], p_out[2], 0.0, p_in[4]]
             points_out.append(p_out)
 
-        res = LaserProjection().create_cloud(transform.header, cloud.fields, points_out)
+        res = LaserProjection().create_cloud(original_scan.header, cloud.fields, points_out)
         return res
 
 ###################################################################################################################################################################################

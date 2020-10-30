@@ -53,7 +53,7 @@ def generate_launch_description(argv=sys.argv[1:]):
             parameters=[{'use_sim_time': True}, 
             		 {'range_max' : 10.0},
             		 {'range_min' : 0.3}],
-            remappings=[('cloud_in', 'pc'),
+            remappings=[('cloud_in', 'pc_concatenated'),
                         ('scan', 'scan_concatenated')]
             )
     ])
