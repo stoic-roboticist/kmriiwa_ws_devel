@@ -50,7 +50,9 @@ def generate_launch_description(argv=sys.argv[1:]):
             executable="pointcloud_to_laserscan_node",
             name="pointcloud_to_laserscan",
             output="screen",
-            parameters=[{'use_sim_time': True}],
+            parameters=[{'use_sim_time': True}, 
+            		 {'range_max' : 10.0},
+            		 {'range_min' : 0.3}],
             remappings=[('cloud_in', 'pc'),
                         ('scan', 'scan_concatenated')]
             )

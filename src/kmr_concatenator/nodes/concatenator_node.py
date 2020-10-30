@@ -55,7 +55,7 @@ class LaserConcatenator(Node):
         node = rclpy.create_node('tf_listener')
 
         # Create publisher to publish final pointcloud
-        self.publisher_ = self.create_publisher(PointCloud2, 'pc', 10)
+        self.publisher_ = self.create_publisher(PointCloud2, 'pc_concatenated', rclpy.qos.qos_profile_sensor_data)
 
         # Make a LaserProjection object
         self.lp = LaserProjection()
@@ -103,13 +103,22 @@ class LaserConcatenator(Node):
         self.pc2_msg1 = self.lp.projectLaser(scan)
         self.pc2_msg2 = self.lp.projectLaser(scan2)
 
-        # Insert frame transform here
+        # Transforms the clouds to the same frame.
+        self.pc2_msg1_transformed = PointCloud2()
+        self.pc2_msg2_transformed = PointCloud2()
+
         self.pc2_msg1_transformed = CloudTransform().do_transform_cloud(self.pc2_msg1, self.transform_B1)
-        print(self.pc2_msg1_transformed.fields)
+        
         self.pc2_msg2_transformed = CloudTransform().do_transform_cloud(self.pc2_msg2, self.transform_B4)
 
-        #pc2_concatenated = LaserProjection.concatenate_clouds(self.pc2_msg1_transformed, self.pc2_msg2_transformed)
+        # Combine the clouds
+        if ((len(self.pc2_msg1_transformed.data) != 0) & (len(self.pc2_msg2_transformed.data) != 0)):
+            self.pc2_concatenated = LaserProjection().concatenate_clouds(self.pc2_msg1_transformed, self.pc2_msg2_transformed)
 
+            # Publishes the combined cloud
+            self.publisher_.publish(self.pc2_concatenated)
+
+        
         # Publishes the translated pointclouds.
         #self.publisher_.publish(self.pc2_msg1_transformed)
         #time.sleep(0.25)
@@ -137,7 +146,7 @@ def main(argv=sys.argv[1:]):
 
 # Class for creating PointCloud2 messages from LaserScan messages
 
-class LaserProjection:
+class LaserProjection():
 
     LASER_SCAN_INVALID   = -1.0
     LASER_SCAN_MIN_RANGE = -2.0
@@ -342,10 +351,12 @@ class LaserProjection:
         for point in points_2:
             points_concatenated.append(point)
 
-        fields = 0
+        header = cloud1.header
 
+        fields = cloud1.fields
 
-        concatenated_cloud = create_cloud(cloud1.header, cloud1)
+        concatenated_cloud = self.create_cloud(cloud1.header, fields, points_concatenated)
+        return concatenated_cloud
 
 
     def create_cloud(self, header, fields, points):
