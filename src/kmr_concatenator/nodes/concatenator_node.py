@@ -366,13 +366,13 @@ class LaserToPointcloud():
         @param header: The point cloud header.
         @type  header: std_msgs.msg.Header
         @param fields: The point cloud fields.
-        @type  fields: iterable of L{sensor_msgs.msg.PointField}
+        @type  fields: iterable of sensor_msgs.msg.PointField
         @param points: The point cloud points.
         @type  points: list of iterables, i.e. one iterable for each point, with the
                        elements of each iterable being the values of the fields for 
                        that point (in the same order as the fields parameter)
         @return: The point cloud.
-        @rtype:  L{sensor_msgs.msg.PointCloud2}
+        @rtype:  sensor_msgs.msg.PointCloud2
         """
 
         cloud_struct = struct.Struct(self._get_struct_fmt(False, fields))
