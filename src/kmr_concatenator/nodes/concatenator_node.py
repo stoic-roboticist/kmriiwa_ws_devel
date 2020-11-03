@@ -75,9 +75,9 @@ class LaserConcatenator(Node):
             rclpy.spin_once(node, timeout_sec=0.1)
 
         try:
-            self.transform_B1 = self.tf_buffer.lookup_transform("base_link","laser_B1_link", node.get_clock().now())
+            self.transform_B1 = self.tf_buffer.lookup_transform("base_footprint","laser_B1_link", node.get_clock().now())
             print('Got B1 transform.')
-            self.transform_B4 = self.tf_buffer.lookup_transform("base_link","laser_B4_link", node.get_clock().now())
+            self.transform_B4 = self.tf_buffer.lookup_transform("base_footprint","laser_B4_link", node.get_clock().now())
             print('Got B4 transform.')
 
         except tf2_ros.LookupException as e:
@@ -90,7 +90,7 @@ class LaserConcatenator(Node):
         self.subscriber_2 = Subscriber(self, LaserScan, 'scan_2', qos_profile = rclpy.qos.qos_profile_sensor_data)
 
         # Syncronizes messages from the two laser scanner topics when messages are less than 0.1 seconds apart.
-        self.syncronizer = ApproximateTimeSynchronizer([self.subscriber_1, self.subscriber_2], 10, 0.1, allow_headerless=False)
+        self.syncronizer = ApproximateTimeSynchronizer([self.subscriber_1, self.subscriber_2], 10, 0.01, allow_headerless=False)
 
         print('Initialized laser scan syncronizer.')
         
@@ -111,11 +111,11 @@ class LaserConcatenator(Node):
         self.pc2_msg2_transformed = CloudTransform().do_transform_cloud(self.pc2_msg2, self.transform_B4, scan)
 
         # Combine the clouds
-        if ((len(self.pc2_msg1_transformed.data) != 0) & (len(self.pc2_msg2_transformed.data) != 0)):
-            self.pc2_concatenated = LaserProjection().concatenate_clouds(self.pc2_msg1_transformed, self.pc2_msg2_transformed)
+        self.pc2_concatenated = LaserProjection().concatenate_clouds(self.pc2_msg1_transformed, self.pc2_msg2_transformed)
+        self.pc2_concatenated.header.frame_id = self.transform_B1.header.frame_id
 
-            # Publishes the combined cloud
-            self.publisher_.publish(self.pc2_concatenated)
+        # Publishes the combined cloud
+        self.publisher_.publish(self.pc2_concatenated)
 
         
         # Publishes the translated pointclouds.
@@ -465,7 +465,6 @@ class LaserProjection():
                         offset += point_step
 
 
-
 class CloudTransform():
     def transform_to_quat_vec(self, t):
         q = np.array([t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z, t.transform.rotation.w])
@@ -480,12 +479,39 @@ class CloudTransform():
         points_out = []
 
         q = qv[0]
-        C = np.array([[q[1]**2 + q[2]**2 - q[3]**2 - q[0]**2, 2*(q[2]*q[3] - q[1]*q[0]), 2*(q[2]*q[0] + q[1]*q[3])],
-                      [2*(q[2]*q[3] + q[1]*q[0]), q[1]**2 - q[2]**2 + q[3]**2 - q[0]**2, 2*(q[3]*q[0] - q[1]*q[2])],
-                      [2*(q[2]*q[0] - q[1]*q[3]), 2*(q[3]*q[0] + q[1]*q[2]), q[1]**2 - q[2]**2 - q[3]**2 + q[0]**2]])
+        v = qv[1]
 
+        rot_z = np.array([[-1,0,0, 0],
+                          [0,-1,0, 0],
+                          [0,0,1, 0],
+                          [0, 0, 0, 1]])
+
+        rot_y = np.array([[-1,0,0,0],
+                          [0,1,0,0],
+                          [0,0,-1,0],
+                          [0,0,0,1]])
+
+        refl_x = np.array([[-1, 0, 0, 0],
+                           [0, 1, 0, 0],
+                           [0, 0, 1, 0],
+                           [0, 0, 0, 1]])
+
+        refl_y = np.array([[1, 0, 0, 0],
+                           [0, -1, 0, 0],
+                           [0, 0, 1, 0],
+                           [0, 0, 0, 1]])
+
+        rot = rot_z @ rot_y
+
+        T = np.array([[q[1]**2 + q[2]**2 - q[3]**2 - q[0]**2, 2*(q[2]*q[3] - q[1]*q[0]), 2*(q[2]*q[0] + q[1]*q[3]),                                       -v[0]],
+                      [2*(q[2]*q[3] + q[1]*q[0]),                                        q[1]**2 - q[2]**2 + q[3]**2 - q[0]**2, 2*(q[3]*q[0] - q[1]*q[2]),v[1]],
+                      [2*(q[2]*q[0] - q[1]*q[3]),                                        2*(q[3]*q[0] + q[1]*q[2]), q[1]**2 - q[2]**2 - q[3]**2 + q[0]**2,v[2]],
+                      [0,                                                                0,                      0,                                       1.0]])
+        print(T)
+
+        # Had to multiply with a reflection matrix about the x-axis.
         for p_in in LaserProjection().read_points(cloud):
-            p_out = np.array((C @ np.array([p_in[0], p_in[1], p_in[2]])) + qv[1])
+            p_out = np.array((T @ [p_in[0], p_in[1], p_in[2], 1.0])) @ refl_x
             p_out = [p_out[0], p_out[1], p_out[2], 0.0, p_in[4]]
             points_out.append(p_out)
 
