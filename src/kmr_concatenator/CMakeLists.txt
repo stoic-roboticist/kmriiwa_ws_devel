@@ -52,14 +52,14 @@ if(BUILD_TESTING)
 endif()
 
 
-
 install(
   DIRECTORY launch script
   DESTINATION share/${PROJECT_NAME}
 )
 
 install(PROGRAMS
-    script/scan_to_pointcloud2.py
+    script/laser_to_pointcloud.py
+    script/cloud_transform.py
     nodes/concatenator_node.py
     DESTINATION lib/${PROJECT_NAME}
 )
