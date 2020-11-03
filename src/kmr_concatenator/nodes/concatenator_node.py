@@ -57,8 +57,8 @@ class LaserConcatenator(Node):
         # Create publisher to publish final pointcloud
         self.publisher_ = self.create_publisher(PointCloud2, 'pc_concatenated', qos_profile = rclpy.qos.qos_profile_sensor_data)
 
-        # Make a LaserProjection object
-        self.lp = LaserProjection()
+        # Make a LaserToPointcloud object
+        self.lp = LaserToPointcloud()
 
         # Setup for performing PointCloud2 transforms
         print('Initializing TF buffer and listener.')
@@ -85,11 +85,16 @@ class LaserConcatenator(Node):
             print('Shutting down.')
             rclpy.shutdown()
 
+        # Generate transformation matrices in the form of NumPy arrays from geometry_msgs.msg.TransformStamped
+        self.T1 = CloudTransform().generate_transform(self.transform_B1)
+        self.T4 = CloudTransform().generate_transform(self.transform_B4)
+
         # Subscribes to the two laser scan topics. Might have to change QoS to 10 when subscribing to real laser readings.
         self.subscriber_1 = Subscriber(self, LaserScan, 'scan', qos_profile = rclpy.qos.qos_profile_sensor_data)
         self.subscriber_2 = Subscriber(self, LaserScan, 'scan_2', qos_profile = rclpy.qos.qos_profile_sensor_data)
 
-        # Syncronizes messages from the two laser scanner topics when messages are less than 0.1 seconds apart.
+        # Syncronizes messages from the two laser scanner topics when messages are less than 0.01 seconds apart.
+        # Adjust to a lower setting to increase the accuracy of the map at the cost of output frequency.
         self.syncronizer = ApproximateTimeSynchronizer([self.subscriber_1, self.subscriber_2], 10, 0.01, allow_headerless=False)
 
         print('Initialized laser scan syncronizer.')
@@ -107,22 +112,15 @@ class LaserConcatenator(Node):
         self.pc2_msg1_transformed = PointCloud2()
         self.pc2_msg2_transformed = PointCloud2()
 
-        self.pc2_msg1_transformed = CloudTransform().do_transform_cloud(self.pc2_msg1, self.transform_B1, scan)
-        self.pc2_msg2_transformed = CloudTransform().do_transform_cloud(self.pc2_msg2, self.transform_B4, scan)
+        self.pc2_msg1_transformed = CloudTransform().do_transform_cloud(self.pc2_msg1, self.T1, scan)
+        self.pc2_msg2_transformed = CloudTransform().do_transform_cloud(self.pc2_msg2, self.T4, scan)
 
         # Combine the clouds
-        self.pc2_concatenated = LaserProjection().concatenate_clouds(self.pc2_msg1_transformed, self.pc2_msg2_transformed)
+        self.pc2_concatenated = LaserToPointcloud().concatenate_clouds(self.pc2_msg1_transformed, self.pc2_msg2_transformed)
         self.pc2_concatenated.header.frame_id = self.transform_B1.header.frame_id
 
         # Publishes the combined cloud
         self.publisher_.publish(self.pc2_concatenated)
-
-        
-        # Publishes the translated pointclouds.
-        #self.publisher_.publish(self.pc2_msg1_transformed)
-        #time.sleep(0.25)
-        #self.publisher_.publish(self.pc2_msg2_transformed)
-        #time.sleep(0.25)
 
 
 def main(argv=sys.argv[1:]):
@@ -143,9 +141,9 @@ def main(argv=sys.argv[1:]):
 
 ###################################################################################################################################################################################
 
-# Class for creating PointCloud2 messages from LaserScan messages
+# Class for creating PointCloud2 messages from LaserScan messages. Parts of the code is inspired by out-of-date packages for assembling laser scans such as laser_geometry.
 
-class LaserProjection():
+class LaserToPointcloud():
 
     LASER_SCAN_INVALID   = -1.0
     LASER_SCAN_MIN_RANGE = -2.0
@@ -337,7 +335,11 @@ class LaserProjection():
 
     def concatenate_clouds(self, cloud1, cloud2):
         '''
-        This requires 2 clouds in the same frame.
+        Concatenates two PointCloud2 messages in the same frame.
+        @param cloud1: Cloud in the destination frame.
+        @type cloud1: sensor_msgs.msg.PointCloud2
+        @param cloud2: Cloud in the destination frame.
+        @type cloud2: sensor_msgs.msg.PointCloud2
         '''
         points_1 = self.read_points(cloud1)
         points_2 = self.read_points(cloud2)
@@ -353,16 +355,16 @@ class LaserProjection():
         header = cloud1.header
 
         fields = cloud1.fields
-
+        # The header doesnt really matter, as it is changed later.
         concatenated_cloud = self.create_cloud(cloud1.header, fields, points_concatenated)
         return concatenated_cloud
 
 
     def create_cloud(self, header, fields, points):
         """
-        Create a L{sensor_msgs.msg.PointCloud2} message.
+        Create a sensor_msgs.msg.PointCloud2 message.
         @param header: The point cloud header.
-        @type  header: L{std_msgs.msg.Header}
+        @type  header: std_msgs.msg.Header
         @param fields: The point cloud fields.
         @type  fields: iterable of L{sensor_msgs.msg.PointField}
         @param points: The point cloud points.
@@ -412,9 +414,9 @@ class LaserProjection():
 
     def read_points(self, cloud, field_names=None, skip_nans=False, uvs=[]):
         """
-        Read points from a L{sensor_msgs.PointCloud2} message.
+        Read points from a PointCloud2 message.
         @param cloud: The point cloud to read from.
-        @type  cloud: L{sensor_msgs.PointCloud2}
+        @type  cloud: sensor_msgs.PointCloud2
         @param field_names: The names of fields to read. If None, read all fields. [default: None]
         @type  field_names: iterable
         @param skip_nans: If True, then don't return any point with a NaN value.
@@ -464,58 +466,71 @@ class LaserProjection():
                         yield unpack_from(data, offset)
                         offset += point_step
 
+###################################################################################################################################################################################
+
+# Class for transforming PointCloud2 messages.
 
 class CloudTransform():
+
     def transform_to_quat_vec(self, t):
+        '''
+        Makes a numpy array consisting of the quaternion and translation vector from the tf2 transform.
+        @param t: Incoming transform.
+        @type t: geometry_msgs.msg.TransformStamped
+        '''
         q = np.array([t.transform.rotation.x, t.transform.rotation.y, t.transform.rotation.z, t.transform.rotation.w])
         v = np.array([t.transform.translation.x, t.transform.translation.y, t.transform.translation.z])
         qv = [q,v]
         return qv
 
-    # PointStamped
-    def do_transform_cloud(self, cloud, transform, original_scan):
+    def generate_transform(self, transform):
+        '''
+        Generates a transformation matrix given a TransformStamped containing a quaternion and vector.
+        @param transform: Transform message from which a transformation matrix is to be generated.
+        @type transform: geometry_msgs.msg.TransformStamped
+        '''
         qv = self.transform_to_quat_vec(transform)
-
-        points_out = []
 
         q = qv[0]
         v = qv[1]
 
-        rot_z = np.array([[-1,0,0, 0],
-                          [0,-1,0, 0],
-                          [0,0,1, 0],
-                          [0, 0, 0, 1]])
-
-        rot_y = np.array([[-1,0,0,0],
-                          [0,1,0,0],
-                          [0,0,-1,0],
-                          [0,0,0,1]])
-
-        refl_x = np.array([[-1, 0, 0, 0],
-                           [0, 1, 0, 0],
-                           [0, 0, 1, 0],
-                           [0, 0, 0, 1]])
-
-        refl_y = np.array([[1, 0, 0, 0],
-                           [0, -1, 0, 0],
-                           [0, 0, 1, 0],
-                           [0, 0, 0, 1]])
-
-        rot = rot_z @ rot_y
-
+        # Generates a transform matrix from the unit quaternion and displacement vector.
+        # Note the sign of the x-coordinate of the vector.
         T = np.array([[q[1]**2 + q[2]**2 - q[3]**2 - q[0]**2, 2*(q[2]*q[3] - q[1]*q[0]), 2*(q[2]*q[0] + q[1]*q[3]),                                       -v[0]],
                       [2*(q[2]*q[3] + q[1]*q[0]),                                        q[1]**2 - q[2]**2 + q[3]**2 - q[0]**2, 2*(q[3]*q[0] - q[1]*q[2]),v[1]],
                       [2*(q[2]*q[0] - q[1]*q[3]),                                        2*(q[3]*q[0] + q[1]*q[2]), q[1]**2 - q[2]**2 - q[3]**2 + q[0]**2,v[2]],
                       [0,                                                                0,                      0,                                       1.0]])
-        print(T)
 
+        return T
+
+    def do_transform_cloud(self, cloud, transform_matrix, original_scan):
+        '''
+        @param cloud: Cloud to be transformed expressed in its original frame.
+        @type cloud: sensor_msgs.msg.PointCloud2
+        @param transform_matrix: Transformation matrix from the original frame to its destination frame.
+        @type transform: NumPy array
+        @param original_scan: The LaserScan message from where the PointCloud2 message is generated.
+                              Used only for header, which again is overwritten after the clouds are concatenated.
+        @type original_scan: sensor_msgs.msg.LaserScan
+        '''
+        T = transform_matrix
+
+        self.refl_x = np.array([[-1, 0, 0, 0],
+                                [0, 1, 0, 0],
+                                [0, 0, 1, 0],
+                                [0, 0, 0, 1]])
+
+        points_out = []
+
+        # Transform each point individually and reflects them about the x-axis of the goal frame.
         # Had to multiply with a reflection matrix about the x-axis.
-        for p_in in LaserProjection().read_points(cloud):
-            p_out = np.array((T @ [p_in[0], p_in[1], p_in[2], 1.0])) @ refl_x
+        for p_in in LaserToPointcloud().read_points(cloud):
+            p_out = np.array((T @ [p_in[0], p_in[1], p_in[2], 1.0])) @ self.refl_x
+            # 0: x-coordinate, 1: y-coordinate, 2: z-coordinate, 4: point number.
             p_out = [p_out[0], p_out[1], p_out[2], 0.0, p_in[4]]
             points_out.append(p_out)
 
-        res = LaserProjection().create_cloud(original_scan.header, cloud.fields, points_out)
+        res = LaserToPointcloud().create_cloud(original_scan.header, cloud.fields, points_out)
         return res
 
 ###################################################################################################################################################################################
