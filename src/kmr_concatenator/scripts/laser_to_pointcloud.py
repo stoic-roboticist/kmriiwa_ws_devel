@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+import numpy as np
+from sensor_msgs.msg import PointField
+
 # Class for creating PointCloud2 messages from LaserScan messages. Parts of the code is inspired by out-of-date packages for assembling laser scans such as laser_geometry.
 
 class LaserToPointcloud():

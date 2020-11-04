@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import numpy as np
+
 class CloudTransform():
 
     def transform_to_quat_vec(self, t):

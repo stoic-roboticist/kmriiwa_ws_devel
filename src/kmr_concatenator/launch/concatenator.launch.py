@@ -28,23 +28,15 @@ import argparse
 
 
 def generate_launch_description(argv=sys.argv[1:]):
-    ws_dir = LaunchConfiguration(
-        'ws_dir',
-        default=os.path.join(
-            get_package_share_directory('kmr_concatenator')))
 
     return LaunchDescription([
-        DeclareLaunchArgument(
-            'ws_dir',
-            default_value=ws_dir,
-            description='Path to the workspace'),
-
         launch_ros.actions.Node(
             package="kmr_concatenator",
             executable="concatenator_node.py",
             output="screen",
-            emulate_tty = True,
+            emulate_tty = True
            ),
+           
         launch_ros.actions.Node(
             package="pointcloud_to_laserscan",
             executable="pointcloud_to_laserscan_node",

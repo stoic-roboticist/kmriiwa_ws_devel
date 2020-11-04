@@ -37,8 +37,7 @@ find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 # Install the python module for this package
-ament_python_install_package(script/)
-ament_python_install_package(nodes/)
+ament_python_install_package(scripts/)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -53,14 +52,14 @@ endif()
 
 
 install(
-  DIRECTORY launch script
+  DIRECTORY launch scripts
   DESTINATION share/${PROJECT_NAME}
 )
 
 install(PROGRAMS
-    script/laser_to_pointcloud.py
-    script/cloud_transform.py
-    nodes/concatenator_node.py
+    scripts/laser_to_pointcloud.py
+    scripts/cloud_transform.py
+    scripts/concatenator_node.py
     DESTINATION lib/${PROJECT_NAME}
 )
 
