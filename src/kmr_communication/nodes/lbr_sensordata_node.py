@@ -36,8 +36,8 @@ from rclpy.utilities import remove_ros_args
 import argparse
 import numpy as np
 
-from script.tcpSocket import TCPSocket
-from script.udpSocket import UDPSocket
+from tcpSocket import TCPSocket
+from udpSocket import UDPSocket
 
 
 def cl_red(msge): return '\033[31m' + msge + '\033[0m'

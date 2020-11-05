@@ -54,16 +54,13 @@ class LaserConcatenator(Node):
         super().__init__('laser_concatenator')
         self.name = 'laser_concatenator'
 
-        node = rclpy.create_node('tf_listener')
-
         # Create publisher to publish final pointcloud
         self.publisher_ = self.create_publisher(PointCloud2, 'pc_concatenated', qos_profile = rclpy.qos.qos_profile_sensor_data)
 
-        # Make a LaserToPointcloud object
-        self.lp = LaserToPointcloud()
-
-        # Setup for performing PointCloud2 transforms
+       
+        # Setup for listening to transformation messages over /tf and /tf_static.
         print('Initializing TF buffer and listener.')
+        node = rclpy.create_node('tf_listener')
         self.tf_buffer = tf2_ros.Buffer(None, node = node)
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, node, spin_thread = False)
 
@@ -102,18 +99,18 @@ class LaserConcatenator(Node):
 
         # Syncronizes messages from the two laser scanner topics when messages are less than 0.01 seconds apart.
         # Adjust the time to a lower setting to increase the accuracy of the map at the cost of output frequency.
-        self.syncronizer = ApproximateTimeSynchronizer([self.subscriber_1, self.subscriber_2], 10, 0.01, allow_headerless=False)
+        self.synchronizer = ApproximateTimeSynchronizer([self.subscriber_1, self.subscriber_2], 10, 0.01, allow_headerless=False)
 
         print('Initialized laser scan syncronizer.')
         
         # Calling callback function when syncronized messages are received.
-        self.syncronizer.registerCallback(self.callback)
+        self.synchronizer.registerCallback(self.callback)
 
 
     def callback(self, scan, scan2):
         # Make two PointCloud2 messages from the scans
-        self.pc2_msg1 = self.lp.projectLaser(scan)
-        self.pc2_msg2 = self.lp.projectLaser(scan2)
+        self.pc2_msg1 = LaserToPointcloud().projectLaser(scan)
+        self.pc2_msg2 = LaserToPointcloud().projectLaser(scan2)
 
         # Transforms the clouds to the same frame.
         self.pc2_msg1_transformed = CloudTransform().do_transform_cloud(self.pc2_msg1, self.T1, scan)

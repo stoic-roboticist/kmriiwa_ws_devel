@@ -23,8 +23,8 @@ from rclpy.node import Node
 from kmr_msgs.msg import LbrStatusdata
 from builtin_interfaces.msg import Time
 from rclpy.qos import qos_profile_sensor_data
-from script.tcpSocket import TCPSocket
-from script.udpSocket import UDPSocket
+from tcpSocket import TCPSocket
+from udpSocket import UDPSocket
 from std_msgs.msg import Bool
 
 from rclpy.utilities import remove_ros_args

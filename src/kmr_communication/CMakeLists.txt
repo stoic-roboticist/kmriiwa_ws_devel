@@ -69,11 +69,11 @@ install(
 install(
   PROGRAMS
     script/dummy_data.py
-    script/view_frames.py
-    script/buffer.py
+    nodes/view_frames.py
+    nodes/buffer.py
     script/test.py
-    script/tcpSocket.py
-    script/udpSocket.py
+    nodes/tcpSocket.py
+    nodes/udpSocket.py
     script/dummy_odom.py
     nodes/kmp_commands_node.py
     nodes/kmp_laserscan_node.py

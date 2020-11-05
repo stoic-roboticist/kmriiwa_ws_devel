@@ -34,8 +34,8 @@ from rclpy.qos import qos_profile_sensor_data
 from rclpy.utilities import remove_ros_args
 import argparse
 
-from script.tcpSocket import TCPSocket
-from script.udpSocket import UDPSocket
+from tcpSocket import TCPSocket
+from udpSocket import UDPSocket
 
 
 def cl_red(msge): return '\033[31m' + msge + '\033[0m'
