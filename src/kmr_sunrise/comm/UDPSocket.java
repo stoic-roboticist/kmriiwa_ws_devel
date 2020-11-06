@@ -26,8 +26,8 @@ public class UDPSocket implements ISocket{
 	public UDPSocket(int port, String node_name) {
 		isConnected = false;
 		this.COMport = port;
-		udpConn = connect();
 		this.nodename=node_name;
+		udpConn = connect();
 	}
 	
 	public DatagramSocket connect()

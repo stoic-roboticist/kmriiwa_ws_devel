@@ -30,9 +30,8 @@ public class TCPSocket implements ISocket{
 	public TCPSocket(int port, String node_name) {
 		isConnected = false;
 		COMport = port;
-		TCPConn = connect();
 		this.nodename=node_name;
-
+		TCPConn = connect();
 	}
 	
 	public Socket connect()

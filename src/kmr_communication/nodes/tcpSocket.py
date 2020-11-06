@@ -62,7 +62,6 @@ class TCPSocket:
         self.isconnected = False
 
     def connect_to_socket(self):
-
         print(cl_cyan('Starting up node:'), self.node_name, 'IP:', self.ip, 'Port:', self.port)
         try:
             self.tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

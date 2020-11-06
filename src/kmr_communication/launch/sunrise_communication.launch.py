@@ -47,24 +47,24 @@ def generate_launch_description(argv=sys.argv[1:]):
             default_value=param_dir,
             description='Full path to parameter file to load'),
 
-        launch_ros.actions.Node(
-            package="tf2_ros",
-            node_executable="static_transform_publisher",
-            output="screen",
-            arguments=['0','0','0','0','0','0','laser_B4_link','scan_2'],
-           ),
+#        launch_ros.actions.Node(
+#            package="tf2_ros",
+#            executable="static_transform_publisher",
+#            output="screen",
+#            arguments=['0','0','0','0','0','0','laser_B4_link','scan_2'],
+#           ),
 
-        launch_ros.actions.Node(
-            package="tf2_ros",
-            node_executable="static_transform_publisher",
-            output="screen",
-            arguments=['0','0','0','0','0','0','laser_B1_link','scan'],
-           ),
+#        launch_ros.actions.Node(
+#            package="tf2_ros",
+#            executable="static_transform_publisher",
+#            output="screen",
+#            arguments=['0','0','0','0','0','0','laser_B1_link','scan'],
+#           ),
 
         launch_ros.actions.Node(
             package="kmr_communication",
-            node_executable="kmp_commands_node.py",
-            node_name="kmp_commands_node",
+            executable="kmp_commands_node.py",
+            name="kmp_commands_node",
             output="screen",
             emulate_tty=True,
             arguments=['-c', connection_type_TCP,'-ro', robot],
@@ -72,8 +72,8 @@ def generate_launch_description(argv=sys.argv[1:]):
 
         launch_ros.actions.Node(
            package="kmr_communication",
-           node_executable="kmp_laserscan_node.py",
-           node_name="kmp_laserscan_node",
+           executable="kmp_laserscan_node.py",
+           name="kmp_laserscan_node",
            output="screen",
            emulate_tty=True,
            arguments=['-c', connection_type_TCP, '-ro', robot],
@@ -81,8 +81,8 @@ def generate_launch_description(argv=sys.argv[1:]):
 
         launch_ros.actions.Node(
            package="kmr_communication",
-           node_executable="kmp_odometry_node.py",
-           node_name="kmp_odometry_node",
+           executable="kmp_odometry_node.py",
+           name="kmp_odometry_node",
            output="screen",
            emulate_tty=True,
            arguments=['-c', connection_type_TCP,'-ro',robot],
@@ -90,8 +90,8 @@ def generate_launch_description(argv=sys.argv[1:]):
 
         launch_ros.actions.Node(
            package="kmr_communication",
-           node_executable="kmp_statusdata_node.py",
-           node_name="kmp_statusdata_node",
+           executable="kmp_statusdata_node.py",
+           name="kmp_statusdata_node",
            output="screen",
            emulate_tty=True,
            arguments=['-c', connection_type_TCP, '-ro', robot],
@@ -99,8 +99,8 @@ def generate_launch_description(argv=sys.argv[1:]):
 
         launch_ros.actions.Node(
             package="kmr_communication",
-            node_executable="lbr_commands_node.py",
-            node_name="lbr_commands_node",
+            executable="lbr_commands_node.py",
+            name="lbr_commands_node",
             output="screen",
             emulate_tty=True,
             arguments=['-c', connection_type_TCP, '-ro', robot],
@@ -108,8 +108,8 @@ def generate_launch_description(argv=sys.argv[1:]):
 
         launch_ros.actions.Node(
             package="kmr_communication",
-            node_executable="lbr_statusdata_node.py",
-            node_name="lbr_statusdata_node",
+            executable="lbr_statusdata_node.py",
+            name="lbr_statusdata_node",
             output="screen",
             emulate_tty=True,
             arguments=['-c', connection_type_TCP, '-ro', robot],
@@ -117,8 +117,8 @@ def generate_launch_description(argv=sys.argv[1:]):
 
         launch_ros.actions.Node(
             package="kmr_communication",
-            node_executable="lbr_sensordata_node.py",
-            node_name="lbr_sensordata_node",
+            executable="lbr_sensordata_node.py",
+            name="lbr_sensordata_node",
             output="screen",
             emulate_tty=True,
             arguments=['-c', connection_type_TCP, '-ro', robot],

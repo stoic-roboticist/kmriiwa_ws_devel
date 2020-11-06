@@ -59,8 +59,11 @@ class CloudTransform():
         # Had to multiply with a reflection matrix about the x-axis.
         for p_in in LaserToPointcloud().read_points(cloud):
             p_out = np.array((T @ [p_in[0], p_in[1], p_in[2], 1.0])) @ self.refl_x
+            # If gazebo:
             # 0: x-coordinate, 1: y-coordinate, 2: z-coordinate, 4: point number.
-            p_out = [p_out[0], p_out[1], p_out[2], 0.0, p_in[4]]
+            # p_out = [p_out[0], p_out[1], p_out[2], 0.0, p_in[4]]
+            # if real robot:
+            p_out = [p_out[0], p_out[1], 0.0, p_in[3]]
             points_out.append(p_out)
 
         res = LaserToPointcloud().create_cloud(original_scan.header, cloud.fields, points_out)

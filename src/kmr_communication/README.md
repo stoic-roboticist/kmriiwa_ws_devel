@@ -18,5 +18,5 @@ In this file, you can also change the port number for each of the nodes.
 ## 2. Run
 To launch all of the communcation nodes, run: 
 ```
-$ ros2 launch kmr_communication sunrise_communication.py 
+$ ros2 launch kmr_communication sunrise_communication.launch.py 
 ```

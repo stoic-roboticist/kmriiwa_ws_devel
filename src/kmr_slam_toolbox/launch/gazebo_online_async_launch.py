@@ -10,14 +10,13 @@ def generate_launch_description():
 
     declare_use_sim_time_argument = DeclareLaunchArgument(
         'use_sim_time',
-        default_value='true',
+        default_value='false',
         description='Use simulation/Gazebo clock')
 
     start_async_slam_toolbox_node = Node(
         parameters=[
           get_package_share_directory("kmr_slam_toolbox") + '/config/gazebo_mapper_params_online_async.yaml',
-          {'use_sim_time': use_sim_time}
-        ],
+          {'use_sim_time': False}],
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
         name='slam_toolbox',

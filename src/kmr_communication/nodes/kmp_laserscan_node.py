@@ -74,8 +74,9 @@ class KmpLaserScanNode(Node):
 
 
         while not self.soc.isconnected:
-            pass
+        	pass
         self.get_logger().info('Node is ready')
+
 
         while rclpy.ok() and self.soc.isconnected:
             if len(self.soc.laserScanB1):
@@ -92,9 +93,9 @@ class KmpLaserScanNode(Node):
             scan = LaserScan()
             scan.header.stamp = self.get_clock().now().to_msg()
             if values[2] == '1801':
-                scan.header.frame_id = "scan"
+                scan.header.frame_id = "laser_B1_link"
             elif values[2] == '1802':
-                scan.header.frame_id="scan_2"
+                scan.header.frame_id = "laser_B4_link"
             scan.angle_increment = (0.5*math.pi)/180
             scan.angle_min = (-135*math.pi)/180
             scan.angle_max = (135*math.pi)/180
@@ -105,6 +106,11 @@ class KmpLaserScanNode(Node):
             except ValueError as e:
                 print(values[3].split(','))
                 print("Error", e)
+            
+            if scan.header.frame_id == "laser_B1_link":
+                self.pub_laserscan1.publish(scan)
+            elif scan.header.frame_id == "laser_B4_link":
+                self.pub_laserscan2.publish(scan)
 
 
 
