@@ -106,7 +106,6 @@ class KmpLaserScanNode(Node):
             except ValueError as e:
                 print(values[3].split(','))
                 print("Error", e)
-            
             if scan.header.frame_id == "laser_B1_link":
                 self.pub_laserscan1.publish(scan)
             elif scan.header.frame_id == "laser_B4_link":
