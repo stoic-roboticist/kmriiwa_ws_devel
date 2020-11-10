@@ -9,7 +9,7 @@ SLAM_Toolbox only takes in a single laser scan topic. Due to this, the two laser
 - Navigation2
 - SLAM_Toolbox (should be included with Navigation2)
 
-- Be connected to the KMR using kmr_communications.
+- Be connected to the KMR using kmr_communications or launch gazebo.
 	- Having the nodes on the KMR launched and communicating with the external computer
 
 ## 3 - Run:
@@ -21,6 +21,12 @@ To launch SLAM_Toolbox for mapping, run:
 ```
 $ ros2 launch kmr_slam_toolbox KMR_online_async_launch.launch.py
 ```
+
+To save the map you have created, run:
+```
+$ ros2 run nav2_map_server map_saver_cli -f 'map_name'
+```
+The map is saved to the current terminal directory.
 
 To launch for localization after a map is created, run:
 
@@ -34,6 +40,8 @@ To view the map while its being traversed or created, launch rviz:
 ```
 $ ros2 launch kmr_bringup rviz.launch.py
 ```
+If the map disappears from Rviz, simply do a restart. The map should still be there, as it comes from kmr_slam_toolbox.
+
 
 ## 4 - Notes:
 The Rviz plugin for SLAM_Toolbox has currently not been ported from ROS1:
