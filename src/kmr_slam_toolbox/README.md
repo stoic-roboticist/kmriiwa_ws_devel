@@ -35,3 +35,6 @@ To view the map while its being traversed or created, launch rviz:
 $ ros2 launch kmr_bringup rviz.launch.py
 ```
 
+## 4 - Notes:
+The Rviz plugin for SLAM_Toolbox has currently not been ported from ROS1:
+https://github.com/SteveMacenski/slam_toolbox/issues/177
