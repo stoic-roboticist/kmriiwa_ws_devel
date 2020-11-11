@@ -125,5 +125,5 @@ You should now be able to see the map appear as you move the robot.
 ## Examples
 By running communications and SLAM_Toolbox, I was able to map out parts of the MANULAB at NTNU in Trondheim, Norway.
 <p align="center">
-  <img src="https://raw.githubusercontent.com/MortenMDahl/kmriiwa_ws_devel/foxy/MANULAB.PNG" height="2500"/>
+  <img src="https://raw.githubusercontent.com/MortenMDahl/kmriiwa_ws_devel/foxy/MANULAB.PNG" height="2000"/>
 </p>
