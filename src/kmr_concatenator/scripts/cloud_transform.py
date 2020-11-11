@@ -46,6 +46,7 @@ class CloudTransform():
                               Used only for header, which again is overwritten after the clouds are concatenated.
         @type original_scan: sensor_msgs.msg.LaserScan
         '''
+
         T = transform_matrix
 
         self.refl_x = np.array([[-1, 0, 0, 0],
@@ -56,7 +57,7 @@ class CloudTransform():
         points_out = []
 
         # Transform each point individually and reflects them about the x-axis of the goal frame.
-        # Had to multiply with a reflection matrix about the x-axis.
+        # Had to reflect about the x-axis, possibly due to the fact that the laser is mounted upside-down.
         for p_in in LaserToPointcloud().read_points(cloud):
             
             # If generated in Gazebo, the points will have a z-coordinate. This sets that to 0.
