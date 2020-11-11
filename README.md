@@ -33,7 +33,7 @@ If cameras and gripper are to be used, they are launched on a separate onboard c
 ## Guide
 All the packages inside the src folder are made to enable the use of a KMR iiwa robot with ROS2. A simple description of all the packages and a quick-start guide follows.
 ### kmr_behaviortree
-The package is made to enable the use of behaviortrees with the KMR. ![Behaviortree.CPP](https://www.behaviortree.dev/) interfaces with Navigation2 and MoveIt2, which makes it simple to make pre-installed programs.
+The package is made to enable the use of behaviortrees with the KMR. [Behaviortree.CPP](https://www.behaviortree.dev/) interfaces with Navigation2 and MoveIt2, which makes it simple to make pre-installed programs.
 
 ### kmr_bringup
 This package publises the transformation between different parts of the robot. This is required when odometry and laser scan data needs to be expressed in different frames of the robot.
@@ -72,7 +72,7 @@ Code which is installed on the KMR through KUKA Workbench. It enables communicat
 The original code from which the updated kmr_sunrise code was based.
 
 ### Quick-start guide
-Currently, only the packages that enable mapping of an environment using ![SLAM_Toolbox](https://github.com/SteveMacenski/slam_toolbox/) has been enabled for use in ROS2 'Foxy Fitzroy'. Other packages, such as Navigation2 and MoveIt2, are yet to be fully tested with the current version.
+Currently, only the packages that enable mapping of an environment using [SLAM_Toolbox](https://github.com/SteveMacenski/slam_toolbox/) has been enabled for use in ROS2 'Foxy Fitzroy'. Other packages, such as Navigation2 and MoveIt2, are yet to be fully tested with the current version.
 
 After building, remember to source the setup file (install/setup.bash).
 
