@@ -93,7 +93,8 @@ class LaserConcatenator(Node):
         self.T1 = CloudTransform().generate_transform(self.transform_B1)
         self.T4 = CloudTransform().generate_transform(self.transform_B4)
 
-        # Subscribes to the two laser scan topics.
+        # Subscribes to the two laser scan topics. Might have to change QoS to 10 when subscribing to real laser readings.
+        # if you are using Gazebo, final arguemtn should be qos_profile = rclpy.qos.qos_profile_sensor_data.
         self.subscriber_1 = Subscriber(self, LaserScan, 'scan', qos_profile = rclpy.qos.qos_profile_sensor_data)
         self.subscriber_2 = Subscriber(self, LaserScan, 'scan_2', qos_profile = rclpy.qos.qos_profile_sensor_data)
 
@@ -103,7 +104,7 @@ class LaserConcatenator(Node):
 
         print('Initialized laser scan syncronizer.')
         
-        # Calling the callback function when syncronized messages are received.
+        # Calling callback function when syncronized messages are received.
         self.synchronizer.registerCallback(self.callback)
 
 
