@@ -63,7 +63,7 @@ Simulate the KMR iiwa in Gazebo.
 Enables both RTAB-Map and Cartographer to be used with the robot. This is not the preferred SLAM method, and better results have been achieved by using SLAM_Toolbox.
 
 ### kmr_slam_toolbox
-Integrates the use of SLAM_Toolbox with the robot. A requirement to run this package is to have kmr_concatenator running in order to get input from both lasers. Further instructions inside the package.
+Integrates the use of [SLAM_Toolbox](https://github.com/SteveMacenski/slam_toolbox/) with the robot. A requirement to run this package is to have kmr_concatenator running in order to get input from both lasers. Further instructions inside the package.
 
 ### kmr_sunrise
 Code which is installed on the KMR through KUKA Workbench. It enables communication with ROS over a TCP or UDP connection.
