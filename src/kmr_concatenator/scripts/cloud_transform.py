@@ -36,7 +36,7 @@ class CloudTransform():
 
         return T
 
-    def do_transform_cloud(self, cloud, transform_matrix, original_scan):
+    def do_transform_cloud(self, cloud, transform_matrix, original_scan, simulated=False):
         '''
         @param cloud: Cloud to be transformed expressed in its original frame.
         @type cloud: sensor_msgs.msg.PointCloud2
@@ -60,12 +60,14 @@ class CloudTransform():
         for p_in in LaserToPointcloud().read_points(cloud):
             
             # If generated in Gazebo, the points will have a z-coordinate. This sets that to 0.
-            if (len(p_in) > 4):
-                p_in = [p_in[0], p_in[1], 0.0, p_in[4]]
-
+         
             p_out = np.array((T @ [p_in[0], p_in[1], p_in[2], 1.0])) @ self.refl_x
 
-            p_out = [p_out[0], p_out[1], p_out[2], p_in[3]]
+            #p_out = [p_out[0], p_out[1], p_out[2], p_in[3]]
+            if (simulated == False):
+                p_out = [p_out[0], p_out[1], p_out[2], p_in[3]]
+            else:
+                p_out = [p_out[0], p_out[1], p_out[2], p_out[3], p_in[4]]
             points_out.append(p_out)
 
         res = LaserToPointcloud().create_cloud(original_scan.header, cloud.fields, points_out)

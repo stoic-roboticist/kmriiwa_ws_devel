@@ -28,9 +28,9 @@ def generate_launch_description():
     map_dir = LaunchConfiguration(
         'map',
         default=os.path.join(
-            get_package_share_directory('kmr_navigation2'),
-            'map',
-            'map_carto2scan3pc.yaml'))
+            get_package_share_directory('kmr_slam_toolbox'),
+            'created_maps',
+            'GAZEBO.yaml'))
 
     param_dir = LaunchConfiguration(
         'params_file',
@@ -76,9 +76,9 @@ def generate_launch_description():
                 'params_file': param_dir}.items(),
         ),
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([state_publisher_launch_file_dir, '/state_publisher.launch.py']),
-        ),
+#        IncludeLaunchDescription(
+#            PythonLaunchDescriptionSource([state_publisher_launch_file_dir, '/state_publisher.launch.py']),
+#        ),
 
         #Node(
         #    package='kmr_navigation2',
@@ -88,9 +88,7 @@ def generate_launch_description():
 
         Node(
             package='rviz2',
-            # Was node_executable, now deprecated
             executable='rviz2',
-            # Was node_name, now deprecated
             name='rviz2',
             arguments=['-d', rviz_config_dir],
             parameters=[{'use_sim_time': use_sim_time}],

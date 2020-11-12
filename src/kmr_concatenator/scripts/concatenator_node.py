@@ -114,8 +114,8 @@ class LaserConcatenator(Node):
         self.pc2_msg2 = LaserToPointcloud().projectLaser(scan2)
 
         # Transforms the clouds to the same frame.
-        self.pc2_msg1_transformed = CloudTransform().do_transform_cloud(self.pc2_msg1, self.T1, scan)
-        self.pc2_msg2_transformed = CloudTransform().do_transform_cloud(self.pc2_msg2, self.T4, scan)
+        self.pc2_msg1_transformed = CloudTransform().do_transform_cloud(self.pc2_msg1, self.T1, scan, True)
+        self.pc2_msg2_transformed = CloudTransform().do_transform_cloud(self.pc2_msg2, self.T4, scan, True)
 
         # Combine the clouds
         self.pc2_concatenated = LaserToPointcloud().concatenate_clouds(self.pc2_msg1_transformed, self.pc2_msg2_transformed)

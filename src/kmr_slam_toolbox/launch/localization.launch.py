@@ -16,9 +16,11 @@ def generate_launch_description():
     start_async_slam_toolbox_node = Node(
         parameters=[
           get_package_share_directory("kmr_slam_toolbox") + '/config/KMR_localization_params_online_async.yaml',
+#          get_package_share_directory("kmr_slam_toolbox") + '/created_maps/GAZEBO.yaml',
+#          get_package_share_directory("kmr_slam_toolbox") + '/created_maps/GAZEBO.pgm',
           {'use_sim_time': False}],
         package='slam_toolbox',
-        executable='async_slam_toolbox_node',
+        executable='localization_slam_toolbox_node',
         name='slam_toolbox',
         output='screen')
 
