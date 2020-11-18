@@ -26,9 +26,9 @@ public abstract class Node extends Thread{
 	private volatile static boolean shutdown;
 	public volatile boolean closed = false;
 	private static volatile boolean EmergencyStop;
-	private volatile static boolean PathFinished;
-	protected volatile static boolean isKMPmoving;
-	private volatile static boolean isLBRmoving;
+	private volatile static boolean PathFinished = true;
+	protected volatile static boolean isKMPmoving = false;
+	private volatile static boolean isLBRmoving = false;
 	private volatile static boolean isKMPconnected;
 	private volatile static boolean isLBRconnected;
 
@@ -49,12 +49,15 @@ public abstract class Node extends Thread{
 	
 	protected String node_name;
 	
-	public Node(int port1, String Conn1, int port2, String Conn2, String nodeName){
+	public Node(int port1, String Conn1, int port2, String Conn2, String node_name){
+		if(node_name == null){
+			System.out.println("This is a test, node_name is null in Node.");
+		}
 		this.KMP_laser_port = port1;
 		this.KMP_odometry_port = port2;
 		this.LaserConnectionType = Conn1;
 		this.OdometryConnectionType = Conn2;
-		this.node_name = nodeName;
+		this.node_name = node_name;
 		setShutdown(false);
 		setEmergencyStop(false);
 		
@@ -64,7 +67,7 @@ public abstract class Node extends Thread{
 	}
 	
 	public Node(int port, String Conn, String nodeName) {
-		this.ConnectionType=Conn;
+		this.ConnectionType = Conn;
 		this.port = port;
 		this.node_name = nodeName;
 		setShutdown(false);
@@ -125,7 +128,7 @@ public abstract class Node extends Thread{
 	}
 	
 	public void setShutdown(boolean in) {
-		System.out.println("Shutdown set by " + this.node_name + " to " + in);
+		System.out.println("shutdown set by " + this.node_name + " to " + in);
 		shutdown=in;
 	}
 	

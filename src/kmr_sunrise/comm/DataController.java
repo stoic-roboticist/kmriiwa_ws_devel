@@ -52,15 +52,13 @@ public class DataController implements DataListener, DataConnectionListener{
 
 	@Override
 	public void onNewLaserData(LaserScan scan) {
-
 		if(fdi_isConnected && this.laser_socket.isConnected()){
 			String scan_data = ">laserScan " +  scan.getTimestamp() + " " + scan.getLaserId()  + " " + scan.getRangesAsString();
 			try{
 				this.laser_socket.send_message(scan_data);
-			}
-			catch(Exception e){
+			}catch(Exception e){
 				System.out.println("Could not send KMP laserdata to ROS: " + e);
-		}
+			}
 		}
 	}
 
@@ -74,8 +72,7 @@ public class DataController implements DataListener, DataConnectionListener{
 					String odom_data = ">odometry " + odom.getTimestamp() + " " + odom.getPose().toString() + " " + odom.getVelocity().toString();
 					this.odometry_socket.send_message(odom_data);
 				}
-			}
-			catch(Exception e){
+			}catch(Exception e){
 				System.out.println("Could not send KMP odometry data to ROS: " + e);
 			}
 	}

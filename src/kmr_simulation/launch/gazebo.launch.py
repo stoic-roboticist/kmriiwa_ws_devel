@@ -26,7 +26,7 @@ import launch
 
 
 def generate_launch_description():
-    use_sim_time = LaunchConfiguration('use_sim_time', default=True)
+    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     world_file_name = 'clearpath_playpen.world'
     world = os.path.join(get_package_share_directory('kmr_simulation'), 'worlds', world_file_name)
 

@@ -34,7 +34,7 @@ public class KMP_status_reader extends Node{
 	private long last_sendtime = System.currentTimeMillis();
 
 	public KMP_status_reader(int port, KmpOmniMove robot,String ConnectionType) {
-		super(port, ConnectionType,"KMP status reader");
+		super(port, ConnectionType, "KMP status reader");
 
 		this.kmp = robot;		
 		if (!(isSocketConnected())) {
@@ -96,6 +96,7 @@ public class KMP_status_reader extends Node{
 				",ProtectionField:" + !this.ProtectionField + 
 				",isKMPmoving:" + getisKMPMoving() +
 				",KMPsafetyStop:" + getEmergencyStop();
+	
 	}
 	
 	public void sendStatus() {
@@ -106,7 +107,7 @@ public class KMP_status_reader extends Node{
 			try{
 				this.socket.send_message(toSend);
 				if(closed){
-					System.out.println("KMP status message is being sendt, even when not allowed.");
+					System.out.println("KMP status sender selv om han ikke faar lov");
 				}
 			}catch(Exception e){
 				System.out.println("Could not send KMP status message to ROS: " + e);
@@ -130,7 +131,7 @@ public class KMP_status_reader extends Node{
 				
 			}
 			if(!closed){
-				System.out.println("Connection with KMP Status Node established.");
+				System.out.println("Connection with KMP Status Node OK!");
 				runmainthread();					
 				}	
 		}

@@ -49,7 +49,10 @@ amcl_rclcpp_node:
 bt_navigator:
   ros__parameters:
     use_sim_time: False
-    bt_xml_filename: "navigate_w_replanning.xml"
+    global_frame: map
+    robot_base_frame: base_link
+    transform_tolerance: 0.1
+    bt_xml_filename: "navigate_w_replanning_time.xml"
     plugin_lib_names:
     - nav2_compute_path_to_pose_action_bt_node
     - nav2_follow_path_action_bt_node
@@ -149,19 +152,25 @@ local_costmap:
         inflation_radius: 0.9 #1.2
       obstacle_layer:
         enabled: True
-        observation_sources: scan_concatenated
+        observation_sources: scan_concatenated scan scan_2
         scan_concatenated:
           topic: /scan_concatenated
           max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: "LaserScan"
-#        scan_2:
-#          topic: /scan_2
-#          max_obstacle_height: 2.0
-#          clearing: True
-#          marking: True
-#          data_type: "LaserScan"
+       # scan:
+       #   topic: /scan
+       #   max_obstacle_height: 2.0
+       #   clearing: True
+       #   marking: True
+       #   data_type: "LaserScan"
+       # scan_2:
+       #   topic: /scan_2
+       #   max_obstacle_height: 2.0
+       #   clearing: True
+       #   marking: True
+       #   data_type: "LaserScan"
 #      voxel_layer:
 #        enabled: True
 #        publish_voxel_map: True
@@ -301,3 +310,11 @@ recoveries_server:
     rotational_acc_lim: 0.2
     simulate_ahead_time: 2.0
     use_sim_time: False
+
+waypoint_follower:
+  ros__parameters:
+    waypoint_task_executor_plugin: "wait_at_waypoint"
+    wait_at_waypoint:
+      plugin: "nav2_waypoint_follower::WaitAtWaypoint"
+      enabled: True
+      waypoint_pause_duration: 0

@@ -23,25 +23,23 @@ import com.kuka.nav.fdi.FDIConnection;
 
 public class KMP_sensor_reader extends Node{
 	
-
     // Data retrieval socket via FDI 
     public FDIConnection fdi;
 	public DataController listener;
 	String FDI_IP = "172.31.1.102";
-	int FDI_port = 34001; 
+	int FDI_port = 34001;
 	
 	// Laser ports on controller
 	private static int laser_B1 = 1801;
 	private static int laser_B4 = 1802;
 	
-
 	
 	public KMP_sensor_reader(int laserport, int odomport, String LaserConnectionType, String OdometryConnectionType) {
 		super(laserport, LaserConnectionType, odomport, OdometryConnectionType, "KMP sensor reader");
-
+		
 		if (!(isLaserSocketConnected())) {
 			Thread monitorLaserConnections = new MonitorLaserConnectionThread();
-			monitorLaserConnections.start();
+			monitorLaserConnections.run();
 			}
 				
 		if (!(isOdometrySocketConnected())) {
@@ -55,8 +53,8 @@ public class KMP_sensor_reader extends Node{
 	}
 	
 	public void fdiConnection(){
-		InetSocketAddress fdi_adress = new InetSocketAddress(FDI_IP,FDI_port);
-		this.fdi = new FDIConnection(fdi_adress);
+		InetSocketAddress fdi_address = new InetSocketAddress(FDI_IP,FDI_port);
+		this.fdi = new FDIConnection(fdi_address);
 		this.listener = new DataController(laser_socket, odometry_socket);
 		this.fdi.addConnectionListener(this.listener);
 		this.fdi.addDataListener(this.listener);
@@ -68,7 +66,6 @@ public class KMP_sensor_reader extends Node{
 	public class MonitorLaserConnectionThread extends Thread {
 		public void run(){
 			while(!(isLaserSocketConnected()) && (!(closed))) {
-
 				createSocket("Laser");
 				if(isLaserSocketConnected()){
 					break;
@@ -85,7 +82,7 @@ public class KMP_sensor_reader extends Node{
 				}
 				listener.setLaserSocket(laser_socket);
 				subscribe_kmp_laser_data();	
-				System.out.println("Connection with KMP Laser Node established.");
+				System.out.println("Connection with KMP Laser Node OK!");
 
 				}	
 		}
@@ -112,7 +109,7 @@ public class KMP_sensor_reader extends Node{
 				}
 				listener.setOdometrySocket(odometry_socket);
 				subscribe_kmp_odometry_data();
-				System.out.println("Connection with KMP Odometry Node established.");
+				System.out.println("Connection with KMP Odometry Node OK!");
 				}
 		}
 	}
@@ -142,11 +139,12 @@ public class KMP_sensor_reader extends Node{
 		}
 		boolean attempt_reconnection=true;
 		while(!closed){
-			if(!attempt_reconnection){attempt_reconnection = true;}
+			if(!attempt_reconnection){
+				attempt_reconnection = true;}
 			
 			while(!getListener().fdi_isConnected){
 				if(attempt_reconnection){
-					this.fdi.disconnect();					
+					this.fdi.disconnect();
 					System.out.println("Initiate new FDI connection");
 					this.fdiConnection();
 					attempt_reconnection=false;
@@ -168,21 +166,21 @@ public class KMP_sensor_reader extends Node{
 		closed = true;
 		try{
 			this.fdi.disconnect();
-			System.out.println("Closing FDI");
+			System.out.println("closing fdi");
 		}catch(Exception e){
-			System.out.println("Cannot close FDI connection! : " + e);
+			System.out.println("Can not close FDI connection! : " + e);
 		}
 		try{
 			laser_socket.close();
 		}catch(Exception b){
-			System.out.println("Cannot close laser socket connection! : " + b);
+			System.out.println("Can not close laser socket connection! : " + b);
 		}
 		try{
 			odometry_socket.close();
 		}catch(Exception c){
-			System.out.println("Cannot close odometry socket connection! : " + c);
+			System.out.println("Can not close odometry socket connection! : " + c);
 		}
-		System.out.println("KMP sensor closed.");
+		System.out.println("KMP sensor closed!");
 	}
 	
 	public boolean isLaserSocketConnected() {

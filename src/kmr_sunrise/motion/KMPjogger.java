@@ -11,7 +11,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-
 public class KMPjogger
 {
   private long JOG_UPDATE_PERIOD = 50L;
@@ -21,7 +20,6 @@ public class KMPjogger
   private ICartesianJoggingSupport _joggableDevice;
   
   private double[] _velocities;
-  
 
   
   public KMPjogger( ICartesianJoggingSupport joggableDevice, long updateperiod) {
@@ -64,7 +62,7 @@ public class KMPjogger
   
   
   public void startJoggingExecution() {
-    if (this._executor  ==null|| this._executor.isShutdown())
+    if (this._executor  == null || this._executor.isShutdown())
     {
       this._executor = Executors.newScheduledThreadPool(2);
     }
@@ -77,7 +75,7 @@ public class KMPjogger
 
 
   public void killJoggingExecution(boolean ismoving) {
-	  System.out.println("Stopping KMPjogger");
+	  System.out.println("Stop KMPjogger");
 	  if (this._executor != null) {
       try{
     	  this._executor.shutdown();
@@ -94,8 +92,5 @@ public class KMPjogger
   public void updateVelocities(double[] vel) {
 	  this._velocities = vel;
 
-  }
-
+  } 
 }
-
-

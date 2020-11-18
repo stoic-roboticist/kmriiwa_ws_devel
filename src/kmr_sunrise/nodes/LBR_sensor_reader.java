@@ -15,6 +15,7 @@
 
 package API_ROS2_Sunrise;
 
+
 import com.kuka.roboticsAPI.deviceModel.LBR;
 
 
@@ -26,7 +27,6 @@ public class LBR_sensor_reader extends Node{
 	// LBR sensor
 	private double[] JointPosition;
 	private double[] MeasuredTorque;
-
 	
 	// Socket
 	int port;
@@ -58,11 +58,11 @@ public class LBR_sensor_reader extends Node{
 				try {
 					Thread.sleep(connection_timeout);
 				} catch (InterruptedException e) {
-					System.out.println("Waiting for connection to LBR commander node...");
+					System.out.println("Waiting for connection to LBR commander node ..");
 				}
 			}
 			if(!closed){
-				System.out.println("Connection with KMP Command Node established.");
+				System.out.println("Connection with KMP Command Node OK!");
 				runmainthread();
 				}	
 		}
@@ -109,7 +109,7 @@ public class LBR_sensor_reader extends Node{
 			try{
 				this.socket.send_message(sensorString);
 				if(closed){
-					System.out.println("LBR sensor message is being sendt, even when not allowed.");
+					System.out.println("LBR sensor sender selv om han ikke faar lov");
 				}
 			}catch(Exception e){
 				System.out.println("Could not send LBR sensormessage to ROS: " + e);

@@ -30,7 +30,7 @@ public class TCPSocket implements ISocket{
 	public TCPSocket(int port, String node_name) {
 		isConnected = false;
 		COMport = port;
-		this.nodename=node_name;
+		this.nodename = node_name;
 		TCPConn = connect();
 	}
 	
@@ -38,7 +38,7 @@ public class TCPSocket implements ISocket{
 	{
 		while (true){
 			try{
-				String remotePC = "192.168.10.117";
+				String remotePC = "192.168.10.250";
 				//String NUC = "192.168.10.120";
 
 				TCPConn = new Socket(remotePC,COMport);
@@ -47,7 +47,7 @@ public class TCPSocket implements ISocket{
 				break;
 			}
 			catch(IOException e1){
-				System.out.println("Could not connect "+ this.nodename+ " to ROS over TCP on port: "+ this.COMport + " Error: " +e1);
+				System.out.println("Could not connect "+ this.nodename+ " to ROS over TCP on port : "+ this.COMport + " Error: " +e1);
 			return null;
 			}
 		}
@@ -80,7 +80,7 @@ public class TCPSocket implements ISocket{
 		
 			}catch(Exception e){
 				System.out.println(this.nodename+ " could not receive message from TCP connection on port: "+ this.COMport + " Error: " +e);
-				return "Error";
+				return "error";
 			}
 	}	
 
@@ -92,7 +92,7 @@ public class TCPSocket implements ISocket{
 			System.out.println("TCP connection to ROS closed port: " + this.COMport);
 			isConnected=false;
 		} catch (Exception e) {
-			System.out.println("Error on closing the TCP communication of  "+ this.nodename+ "  on port: " + this.COMport + " Error: " + e);
+			System.out.println("ERROR closing the TCP communication of  "+ this.nodename+ "  on port: " + this.COMport + " error: " + e);
 		}
 	}
 	

@@ -32,7 +32,7 @@ public class LBR_status_reader extends Node{
 		this.lbr = robot;
 
 		if (!(isSocketConnected())) {
-			System.out.println("Starting thread to connect LBR status node...");
+			System.out.println("Starting thread to connect LBR status node....");
 			Thread monitorLBRStatusConnections = new MonitorLBRStatusConnectionsThread();
 			monitorLBRStatusConnections.start();
 			}
@@ -53,6 +53,7 @@ public class LBR_status_reader extends Node{
 
 	
 	private String generateStatusString() {
+
 		String toSend= 	">lbr_statusdata ,"  + System.nanoTime() + 
 				",ReadyToMove:" + getReadyToMove() + 
 				",isLBRmoving:" + getisLBRMoving() + 
@@ -70,7 +71,7 @@ public class LBR_status_reader extends Node{
 			try{
 				this.socket.send_message(statusString);
 				if(closed){
-					System.out.println(this.node_name +" tried to send a message when the application was closed!");
+					System.out.println(this.node_name +" tried to send a message when application was closed");
 				}
 			}catch(Exception e){
 				System.out.println("Could not send "+ this.node_name + " message to ROS: " + e);
@@ -94,7 +95,7 @@ public class LBR_status_reader extends Node{
 				
 			}
 			if(!closed){
-				System.out.println("Connection with LBR Status Node established.");
+				System.out.println("Connection with LBR Status Node OK!");
 				runmainthread();					
 				}	
 		}
@@ -112,7 +113,7 @@ public class LBR_status_reader extends Node{
 			this.socket.close();
 		}catch(Exception e){
 				System.out.println("Could not close LBR status connection: " +e);
-			}		System.out.println("LBR status closed.");
+			}		System.out.println("LBR status closed!");
 
 	}
 	

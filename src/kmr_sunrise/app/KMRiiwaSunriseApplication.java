@@ -49,6 +49,7 @@ public class KMRiiwaSunriseApplication extends RoboticsAPIApplication{
 	private volatile boolean AppRunning;
 	private IAutomaticResumeFunction resumeFunction;
 	SafetyStateListener safetylistener;
+	public static boolean StateChange = true;
 	
 	// Declare KMP
 	@Inject
@@ -73,6 +74,9 @@ public class KMRiiwaSunriseApplication extends RoboticsAPIApplication{
 	int LBR_command_port = 30005;
 	int LBR_status_port = 30006;
 	int LBR_sensor_port = 30007;
+	
+	// Threading parameter
+	String threading_prio = "LBR";
 	
 	// Connection types
 	String TCPConnection = "TCP";
@@ -127,17 +131,16 @@ public class KMRiiwaSunriseApplication extends RoboticsAPIApplication{
 					System.out.println("Application ready to run!");	
 					break;
 			}else if((System.currentTimeMillis() - startTime) > shutDownAfterMs){
-				System.out.println("Could not connect to a command node after " + shutDownAfterMs/1000 + "seconds. Shutting down.");	
+				System.out.println("Could not connect to a command node after " + shutDownAfterMs/1000 + "s. Shutting down.");	
 				shutdown_application();
 				break;
 			}				
 		}
-
 		// Establish remaining nodes
 		if(AppRunning){
 			kmp_status_reader = new KMP_status_reader(KMP_status_port, kmp,TCPConnection);
 			lbr_status_reader = new LBR_status_reader(LBR_status_port, lbr,TCPConnection);
-			lbr_sensor_reader = new LBR_sensor_reader(LBR_sensor_port,lbr, TCPConnection);
+			lbr_sensor_reader = new LBR_sensor_reader(LBR_sensor_port, lbr, TCPConnection);
 			kmp_sensor_reader = new KMP_sensor_reader(KMP_laser_port, KMP_odometry_port, TCPConnection, TCPConnection);
 		}
 	}
@@ -152,7 +155,7 @@ public class KMRiiwaSunriseApplication extends RoboticsAPIApplication{
 		kmp_status_reader.close();
 		kmp_sensor_reader.close();
 		}catch(Exception e){
-			System.out.println("Could not close KMP sensor and status nodes");
+			System.out.println("Could not close KMP sensor and status nodes: " + e);
 		}
 		
 		try{
@@ -160,7 +163,7 @@ public class KMRiiwaSunriseApplication extends RoboticsAPIApplication{
 		
 		lbr_sensor_reader.close();
 		}catch(Exception e){
-			System.out.println("Could not close LBR status and sensor nodes");
+			System.out.println("Could not close LBR status and sensor nodes: "+ e);
 		}
     	System.out.println("Application terminated");
     	    	
@@ -180,13 +183,13 @@ public class KMRiiwaSunriseApplication extends RoboticsAPIApplication{
 		// Start all connected nodes
 		kmp_commander.setPriority(Thread.MAX_PRIORITY);
 		lbr_commander.setPriority(Thread.MAX_PRIORITY);
+		
 		if(!(kmp_commander ==null)){
 			if(kmp_commander.isSocketConnected()) {
 				kmp_commander.start();
 			}
 		}
 		if(!(kmp_status_reader ==null)){
-
 			if(kmp_status_reader.isSocketConnected()) {
 				kmp_status_reader.start();
 			}
@@ -214,7 +217,34 @@ public class KMRiiwaSunriseApplication extends RoboticsAPIApplication{
 		while(AppRunning)
 		{    
 			AppRunning = (!(kmp_commander.getShutdown() || lbr_commander.getShutdown()));
-
+			
+			if(StateChange){
+				System.out.println("State change.");
+				StateChange = false;
+				// Endre prio til 2/7?
+				if(!lbr_commander.getisPathFinished() && !(threading_prio == "LBR")){
+					threading_prio = "LBR";
+					// kmp_commander.setPriority(Thread.MIN_PRIORITY);
+					kmp_status_reader.setPriority(Thread.MIN_PRIORITY);
+					
+					System.out.println("Threading priority: " + threading_prio);
+					
+					// lbr_commander.setPriority(Thread.MAX_PRIORITY);
+					lbr_sensor_reader.setPriority(Thread.MAX_PRIORITY);
+					lbr_status_reader.setPriority(Thread.MAX_PRIORITY);
+				}
+				else if(lbr_commander.getisPathFinished() && !(threading_prio == "KMP")){
+					threading_prio = "KMP";
+					kmp_status_reader.setPriority(Thread.MAX_PRIORITY);
+					
+					System.out.println("Threading priority: " + threading_prio);
+					
+					lbr_commander.setPriority(Thread.MIN_PRIORITY);
+					lbr_sensor_reader.setPriority(Thread.MIN_PRIORITY);
+					lbr_status_reader.setPriority(Thread.MIN_PRIORITY);
+				}
+			}
+			
 		}
 		
 		System.out.println("Shutdown message received in main application");

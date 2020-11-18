@@ -30,14 +30,14 @@ def generate_launch_description():
         default=os.path.join(
             get_package_share_directory('kmr_slam_toolbox'),
             'created_maps',
-            'GAZEBO.yaml'))
+            'MANULAB.yaml'))
 
     param_dir = LaunchConfiguration(
         'params_file',
         default=os.path.join(
             get_package_share_directory('kmr_navigation2'),
             'param',
-            'param_foxy.yaml'))
+            'param_devel.yaml'))
     
     xml = LaunchConfiguration(
         'bt_xml_file',

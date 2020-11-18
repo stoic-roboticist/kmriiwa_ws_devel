@@ -1,5 +1,4 @@
 // Copyright 2019 Norwegian University of Science and Technology.
-// Modifications copyright (C) 2020 Morten Melby Dahl
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,9 +17,6 @@ package API_ROS2_Sunrise;
 // Implemented classes
 import API_ROS2_Sunrise.PTPpoint;
 
-// Imported classes to control thread priorities.
-import API_ROS2_Sunrise.LBR_sensor_reader;
-import API_ROS2_Sunrise.LBR_status_reader;
 
 // RoboticsAPI
 import com.kuka.roboticsAPI.deviceModel.JointPosition;
@@ -43,9 +39,14 @@ import java.util.List;
 
 public class LBR_commander extends Node{
 	
-
 	// Robot Specific
 	LBR lbr;
+	
+	// Implemented node classes
+	LBR_sensor_reader lbr_sensor_reader;
+	LBR_status_reader lbr_status_reader;
+	KMP_sensor_reader kmp_sensor_reader;
+	KMP_status_reader kmp_status_reader;
 	
 	// Motion: LBR
 	private JointPosition CommandedjointPos;
@@ -56,10 +57,7 @@ public class LBR_commander extends Node{
 	private int jointCount;
 	private static final double zero = Math.pow(10,-40);
 
-	// Implemented node classes
-	LBR_sensor_reader lbr_sensor_reader;
-	LBR_status_reader lbr_status_reader;
-
+	
 	// Spline Motion
 	double[] poses;
 	double[] velocities;
@@ -79,7 +77,7 @@ public class LBR_commander extends Node{
 		accelerations = new double[jointCount];
 		
 		if (!(isSocketConnected())) {
-			System.out.println("Starting thread to connect LBR command node... ");
+			System.out.println("Starting thread to connect LBR command node....");
 			Thread monitorLBRCommandConnections = new MonitorLBRCommandConnectionsThread();
 			monitorLBRCommandConnections.start();
 			}else {
@@ -106,17 +104,13 @@ public class LBR_commander extends Node{
 		    		break;
 					}
 				if ((splt[0]).equals("setLBRmotion")){
-					// Max priority before moving.
-					LBR_commander.setPriority(Thread.MAX_PRIORITY);
-					lbr_sensor_reader.setPriority(Thread.MAX_PRIORITY);
-					lbr_status_reader.setPriority(Thread.MAX_PRIORITY);
+					
+					// Declares state change.
+					API_ROS2_Sunrise.KMRiiwaSunriseApplication.StateChange = true;
+					
 					JointLBRMotion(Commandstr);
 					}
 				if ((splt[0]).equals("pathPointLBR")){
-					// Max priority before moving.
-					LBR_commander.setPriority(Thread.MAX_PRIORITY);
-					lbr_sensor_reader.setPriority(Thread.MAX_PRIORITY);
-					lbr_status_reader.setPriority(Thread.MAX_PRIORITY);
 					addPointToSegment(Commandstr);
 					}
 		}}
@@ -128,10 +122,14 @@ public class LBR_commander extends Node{
 		
 		// Skip start point as velocity and acceleration is 0
 		if(pointType.equals("StartPoint")){
-			// Clears points if StartPoint is received.
+			
 			splineSegments.clear();
-			System.out.println("Startpoint received.");
+			System.out.println("Startpoint received");
+			
 			setisPathFinished(false);
+			
+			// Declares state change.
+			API_ROS2_Sunrise.KMRiiwaSunriseApplication.StateChange = true;
 		}else{
 			// Read message
 			for(int i = 0; i < jointCount ; ++i){
@@ -147,7 +145,7 @@ public class LBR_commander extends Node{
 			splineSegments.add(ptp.getPTP());
 			
 			if(pointType.equals("EndPoint")){
-				System.out.println("Endpoint received.");
+				System.out.println("endpoint received");
 				followPath();
 			}
 		}
@@ -175,7 +173,6 @@ public class LBR_commander extends Node{
 				if(jointIndex==-1){ // A10: Stop all
 					if(getisLBRMoving()){
 						currentmotion.cancel();
-					}
 					setisLBRMoving(false);
 					CommandedjointPos.set(lbr.getCurrentJointPosition());
 				}else if(jointIndex == 8){
@@ -185,13 +182,9 @@ public class LBR_commander extends Node{
 					}
 				    lbr.move(ptp(drivePos).setJointVelocityRel(defaultVelocity));
 					setisLBRMoving(false);
-					CommandedjointPos.set(lbr.getCurrentJointPosition());
-
-					// Lowest priority if the arm is in driveposition.
-					LBR_commander.setPriority(Thread.MIN_PRIORITY);
-					lbr_sensor_reader.setPriority(Thread.MIN_PRIORITY);
-					lbr_status_reader.setPriority(Thread.MIN_PRIORITY);
+				    CommandedjointPos.set(lbr.getCurrentJointPosition());
 				}else{
+					
 					jointAngle = setJointAngle(jointIndex, direction);
 					if(!(CommandedjointPos.get(jointIndex)==jointAngle)){
 						CommandedjointPos.set(jointIndex, jointAngle);
@@ -203,6 +196,7 @@ public class LBR_commander extends Node{
 					}
 				}	
 		}
+	}
 	}
 	private double setJointAngle(int jointIndex, double direction) {
 		double jointAngle = lbr.getCurrentJointPosition().get(jointIndex);
@@ -219,7 +213,7 @@ public class LBR_commander extends Node{
 			while(isNodeRunning()) {
 				if (getEmergencyStop()){
 						if (getisLBRMoving()){
-							System.out.println("LBR Emergencythread");
+							System.out.println("Lbr emergencythread");
 							if(!(currentmotion==null)){
 								currentmotion.cancel();
 							}
@@ -246,11 +240,11 @@ public class LBR_commander extends Node{
 				try {
 					Thread.sleep(timeout);
 				} catch (InterruptedException e) {
-					System.out.println("Waiting for connection to LBR commander node...");
+					System.out.println("Waiting for connection to LBR commander node ..");
 				}
 			}
 			if(!closed){
-				System.out.println("Connection with LBR Command Node established.");
+				System.out.println("Connection with LBR Command Node OK!");
 				runmainthread();
 				}	
 		}
@@ -302,7 +296,7 @@ public class LBR_commander extends Node{
 		}catch(Exception e){
 				System.out.println("Could not close LBR commander connection: " +e);
 			}
-		System.out.println("LBR command closed.");
+		System.out.println("LBR command closed!");
 
 	}
 
