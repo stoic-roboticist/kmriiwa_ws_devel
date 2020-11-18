@@ -24,7 +24,7 @@ If cameras and gripper are to be used, they are launched on a separate onboard c
 **Required ROS Packages:**
 - Gazebo packages
 - Navigation2
-- MoveIt2
+- (MoveIt2)
 - laserscan_to_pointcloud
 - (Ros2 Intel Realsense (ROS2 Wrapper for Intel® RealSense™ Devices))
 - (ROS2 Openvino Toolkit (dependent on OpenVino Toolkit))
@@ -122,8 +122,29 @@ $ ros2 launch kmr_bringup rviz.launch.py
 ```
 You should now be able to see the map appear as you move the robot.
 
+To navigate the robot around the map you just made, simply add the saved map to the launch file of kmr_navigation2. 
+Connect the robot using 
+```
+$ ros2 launch kmr_communications sunrise_communication.launch.py
+```
+Start the laser concatenator by running
+```
+$ ros2 launch kmr_bringup state_publisher.launch.py
+$ ros2 launch kmr_concatenator concatenator.launch.py
+```
+Then start Navigation2 by running
+```
+$ ros2 launch kmr_navigation2 navigation2.launch.py
+```
+Now estimate the initial position of the robot by using the "2D pose estimate" button. Once that is done, either set a goal by using the "2D Goal point" button, or make a waypoint route by using the rviz menu for Navigation2. The robot should now be moving on its own! An example of path planning can be seen in the Example section.
+
 ## Example
 By running communications and SLAM_Toolbox, I was able to map out parts of the MANULAB at NTNU in Trondheim, Norway.
 <p align="center">
   <img src="https://raw.githubusercontent.com/MortenMDahl/kmriiwa_ws_devel/foxy/MANULAB.PNG"/>
+</p>
+
+This map can be used to navigate the robot using Navigation2.
+<p align="center">
+  <img src="https://raw.githubusercontent.com/MortenMDahl/kmriiwa_ws_devel/foxy/images/plannedpath.png"/>
 </p>
