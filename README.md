@@ -42,10 +42,10 @@ This package publises the transformation between different parts of the robot. T
 To establish communication between the KMR and ROS2, this package sets up a TCP or UDP connection which receives and sends information between the two systems.
 
 ### kmr_concatenator
-As the preferred SLAM software SLAM_Toolbox only takes in data from a single LaserScan topic, data from the two laser scanners on the KMR has to be concatenated and transformed. This package concatenates the data by converting between LaserScan and PointCloud2 and transforming the individual points before adding them back together. It is also supported by a node from the 'laserscan_to_pointcloud' package with the pointcloud_to_laserscan_node.
+As the preferred SLAM software SLAM_Toolbox only takes in data from a single LaserScan topic, data from the two laser scanners on the KMR has to be transformed and concatenated. This package concatenates the data by converting between LaserScan and PointCloud2 and transforming the individual points before adding them back together. It is also supported by the 'laserscan_to_pointcloud' package with the pointcloud_to_laserscan_node.
 
 ### kmr_manipulator
-To enable the use of a Robotiq gripper outside of the KUKA system, this package was developed. It takes in ROS commands and translates them into movement of the gripper.
+This package was developed to enable the use of a Robotiq gripper outside of the KUKA system. It takes commands from a topic and translates them into movement of the gripper.
 
 ### kmr_moveit2
 This package enables trajectory generation for the iiwa arm by integrating MoveIt2.
@@ -60,7 +60,7 @@ Enables the use of Navigation2 with the KMR.
 Simulate the KMR iiwa in Gazebo.
 
 ### kmr_slam
-Enables both RTAB-Map and Cartographer to be used with the robot. This is not the preferred SLAM method, and better results have been achieved by using SLAM_Toolbox.
+Enables both RTAB-Map and Cartographer to be used with the robot. This is not the preferred SLAM method, and better results have been achieved by using SLAM_Toolbox. Currently not tested on the Foxy build.
 
 ### kmr_slam_toolbox
 Integrates the use of [SLAM_Toolbox](https://github.com/SteveMacenski/slam_toolbox/) with the robot. A requirement to run this package is to have kmr_concatenator running in order to get input from both lasers. Further instructions inside the package.
@@ -69,10 +69,10 @@ Integrates the use of [SLAM_Toolbox](https://github.com/SteveMacenski/slam_toolb
 Code which is installed on the KMR through KUKA Workbench. It enables communication with ROS over a TCP or UDP connection.
 
 ### kmr_sunrise_original
-The original code from which the updated kmr_sunrise code was based.
+The original code from which the updated kmr_sunrise code is based upon.
 
 ### Quick-start guide
-Currently, only the packages that enable mapping of an environment using [SLAM_Toolbox](https://github.com/SteveMacenski/slam_toolbox/) has been enabled for use in ROS2 'Foxy Fitzroy'. Other packages, such as Navigation2 and MoveIt2, are yet to be fully tested with the current version.
+Currently, only the packages that enable mapping of an environment using [SLAM_Toolbox](https://github.com/SteveMacenski/slam_toolbox/) and Navigation2 has been enabled for use in ROS2 'Foxy Fitzroy'. Other packages, such as MoveIt2, are yet to be fully tested with the current version.
 
 After building, remember to source the setup file (install/setup.bash).
 
@@ -101,6 +101,8 @@ $ ros2 launch kmr_bringup state_publisher.launch.py
 ```
 This is required in order to get kmr_concatentator to work. kmr_concatenator takes input from the two laser scanners on the robot and concatenates them into a single LaserScan message expressed in a single frame. The transformation from laser scanner frames to a central frame is therefore required.
 
+It is important that you set simulated to either True or False in the concatenator_node.py. By default, it is False.
+
 To concatenate the laser scan messages, run
 ```
 $ ros2 launch kmr_concatenator concatenator.launch.py
@@ -116,7 +118,7 @@ If you are using the real KMR, run
 $ ros2 launch kmr_slam_toolbox KMR_online_async_launch.launch.py
 ```
 
-To visualize the map you are creating, we need to launch rviz. This can be done by running
+To visualize the map you are creating, we need to launch RViz. This can be done by running
 ```
 $ ros2 launch kmr_bringup rviz.launch.py
 ```
@@ -136,7 +138,7 @@ Then start Navigation2 by running
 ```
 $ ros2 launch kmr_navigation2 navigation2.launch.py
 ```
-Now estimate the initial position of the robot by using the "2D pose estimate" button. Once that is done, either set a goal by using the "2D Goal point" button, or make a waypoint route by using the rviz menu for Navigation2. The robot should now be moving on its own! An example of path planning can be seen in the Example section.
+Now estimate the initial position of the robot by using the "2D pose estimate" button. Once that is done, either set a goal by using the "2D Goal point" button, or make a waypoint route by using the RViz menu for Navigation2. The robot should now be moving on its own! An example of path planning can be seen in the Example section.
 
 ## Example
 By running communications and SLAM_Toolbox, I was able to map out parts of the MANULAB at NTNU in Trondheim, Norway.
