@@ -17,7 +17,7 @@ If cameras and gripper are to be used, they are launched on a separate onboard c
 
 **System requirements:** 
 - Ubuntu 20.04
-- Python 3.8.2
+- Python 3.8.5
 - ROS2 'Foxy Fitzroy'
 
 
