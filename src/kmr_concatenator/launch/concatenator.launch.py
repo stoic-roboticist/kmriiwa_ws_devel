@@ -33,6 +33,7 @@ def generate_launch_description(argv=sys.argv[1:]):
         launch_ros.actions.Node(
             package="kmr_concatenator",
             executable="concatenator_node.py",
+            name="concatenator_node",
             output="screen",
             emulate_tty = True
            ),
