@@ -1,0 +1,3 @@
+concatenator_node:
+  ros__parameters:
+    simulated=False
