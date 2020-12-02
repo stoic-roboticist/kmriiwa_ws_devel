@@ -222,7 +222,10 @@ public class KMRiiwaSunriseApplication extends RoboticsAPIApplication{
 				System.out.println("State change.");
 				StateChange = false;
 				// Endre prio til 2/7?
-				if(!lbr_commander.getisPathFinished() && !(threading_prio == "LBR")){
+				
+				// Gjør endringer på Sunrise PC-en!!
+
+				if(!(threading_prio == "LBR") && !lbr_commander.getisPathFinished()){
 					threading_prio = "LBR";
 					// kmp_commander.setPriority(Thread.MIN_PRIORITY);
 					kmp_status_reader.setPriority(Thread.MIN_PRIORITY);
@@ -233,15 +236,16 @@ public class KMRiiwaSunriseApplication extends RoboticsAPIApplication{
 					lbr_sensor_reader.setPriority(Thread.MAX_PRIORITY);
 					lbr_status_reader.setPriority(Thread.MAX_PRIORITY);
 				}
-				else if(lbr_commander.getisPathFinished() && !(threading_prio == "KMP")){
+				else if(!(threading_prio == "KMP") && lbr_commander.getisPathFinished()){
 					threading_prio = "KMP";
-					kmp_status_reader.setPriority(Thread.MAX_PRIORITY);
-					
-					System.out.println("Threading priority: " + threading_prio);
-					
-					lbr_commander.setPriority(Thread.MIN_PRIORITY);
+					// lbr_commander.setPriority(Thread.MIN_PRIORITY);
 					lbr_sensor_reader.setPriority(Thread.MIN_PRIORITY);
 					lbr_status_reader.setPriority(Thread.MIN_PRIORITY);
+					
+					System.out.println("Threading priority: " + threading_prio);
+
+					kmp_status_reader.setPriority(Thread.MAX_PRIORITY);
+
 				}
 			}
 			

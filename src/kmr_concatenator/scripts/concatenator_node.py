@@ -50,9 +50,14 @@ from message_filters import Subscriber, ApproximateTimeSynchronizer
 
 class LaserConcatenator(Node):
 
-    def __init__(self):
+    def __init__(self, simulated):
         super().__init__('laser_concatenator')
         self.name = 'laser_concatenator'
+
+        if simulated=='true':
+            self.simulated = True
+        else:
+            self.simulated = False
 
         # Create publisher to publish final pointcloud
         self.publisher_ = self.create_publisher(PointCloud2, 'pc_concatenated', qos_profile = rclpy.qos.qos_profile_sensor_data)
@@ -114,8 +119,8 @@ class LaserConcatenator(Node):
         self.pc2_msg2 = LaserToPointcloud().projectLaser(scan2)
 
         # Transforms the clouds to the same frame.
-        self.pc2_msg1_transformed = CloudTransform().do_transform_cloud(self.pc2_msg1, self.T1, scan, False)
-        self.pc2_msg2_transformed = CloudTransform().do_transform_cloud(self.pc2_msg2, self.T4, scan, False)
+        self.pc2_msg1_transformed = CloudTransform().do_transform_cloud(self.pc2_msg1, self.T1, scan, self.simulated)
+        self.pc2_msg2_transformed = CloudTransform().do_transform_cloud(self.pc2_msg2, self.T4, scan, self.simulated)
 
         # Combine the clouds
         self.pc2_concatenated = LaserToPointcloud().concatenate_clouds(self.pc2_msg1_transformed, self.pc2_msg2_transformed)
@@ -127,9 +132,11 @@ class LaserConcatenator(Node):
 
 def main(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('-sim','--simulated')
     args = parser.parse_args(remove_ros_args(args=argv))
+
     rclpy.init(args=argv)
-    concatenator_node = LaserConcatenator()
+    concatenator_node = LaserConcatenator(args.simulated)
 
     rclpy.spin(concatenator_node)
 
