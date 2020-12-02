@@ -143,7 +143,7 @@ Now estimate the initial position of the robot by using the "2D pose estimate" b
 ## Example
 By running communications and SLAM_Toolbox, I was able to map out parts of the MANULAB at NTNU in Trondheim, Norway.
 <p align="center">
-  <img src="https://raw.githubusercontent.com/MortenMDahl/kmriiwa_ws_devel/foxy/MANULAB.PNG"/>
+  <img src="https://raw.githubusercontent.com/MortenMDahl/kmriiwa_ws_devel/foxy/images/MANULAB.PNG"/>
 </p>
 
 This map can be used to navigate the robot using Navigation2.
