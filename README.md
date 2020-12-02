@@ -101,13 +101,13 @@ $ ros2 launch kmr_bringup state_publisher.launch.py
 ```
 This is required in order to get kmr_concatentator to work. kmr_concatenator takes input from the two laser scanners on the robot and concatenates them into a single LaserScan message expressed in a single frame. The transformation from laser scanner frames to a central frame is therefore required.
 
-It is important that you set simulated to either True or False in the concatenator_node.py. By default, it is False.
+It is important that you set simulated to either 'true' or 'false' in the concatenator.launch.py file. By default, it is 'false'.
 
 To concatenate the laser scan messages, run
 ```
 $ ros2 launch kmr_concatenator concatenator.launch.py
 ```
-By again running `ros2 topic list`, you should now see /pc_concatenated and /scan_concatenated. /pc_concatenated is created by the concatenator_node, and /scan_concatenated is created by the pointcloud_to_laserscan_node using the concatenated point clouds in /pc_concatenated. 
+By again running `ros2 topic list`, you should now see /pc_concatenated and /scan_concatenated. /pc_concatenated is created by the concatenator_node, and /scan_concatenated is created by the pointcloud_to_laserscan_node using the concatenated point cloud in /pc_concatenated. 
 
 To create maps using SLAM and the simulated KMR, run
 ```
