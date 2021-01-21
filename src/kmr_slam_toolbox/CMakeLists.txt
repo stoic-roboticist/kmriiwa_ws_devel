@@ -23,7 +23,8 @@ find_package(ament_cmake REQUIRED)
 
 
 ############################### rviz plugins ###############################
-find_package(rviz_default_plugins REQUIRED)
+# Not up to date. Had to comment out the following line;
+#find_package(rviz_default_plugins REQUIRED)
 
 install(FILES rviz_plugins.xml
   DESTINATION share

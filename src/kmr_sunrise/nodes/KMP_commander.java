@@ -42,6 +42,10 @@ public class KMP_commander extends Node{
 	KMP_sensor_reader kmp_sensor_reader;
 	KMP_status_reader kmp_status_reader;
 
+	// Added:
+	// Startup
+	boolean startup = true;
+
 	public KMP_commander(int port, KmpOmniMove robot, String ConnectionType) {
 		super(port,ConnectionType, "KMP commander");
 		this.kmp = robot;
@@ -58,9 +62,17 @@ public class KMP_commander extends Node{
 
 	@Override
 	public void run() {
-		Thread emergencyStopThread = new MonitorEmergencyStopThread();
-		emergencyStopThread.start();
+		// Also possible cause of lag - emergency stop thread is constantly started.
+		// When the safety button is released, three emergency stop strings are printed. Is this the cause?
+		// Added:
+		if (startup){
+			Thread emergencyStopThread = new MonitorEmergencyStopThread();
+			emergencyStopThread.start();
+			startup = false;
+		}
 		
+		
+		// Possible that this is the cause of lag? Constantly updating Commandstr.
 		while(isNodeRunning())
 		{
 			String Commandstr = this.socket.receive_message(); 

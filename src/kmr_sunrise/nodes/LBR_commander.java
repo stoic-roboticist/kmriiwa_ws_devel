@@ -64,6 +64,10 @@ public class LBR_commander extends Node{
 	double[] accelerations;
 	private List<SplineMotionJP<?>> splineSegments = new ArrayList<SplineMotionJP<?>>();
 
+	// Added:
+	// Startup
+	boolean startup = true;
+
 
 	public LBR_commander(int port,LBR robot, String ConnectionType, AbstractFrame drivepos) {
 		super(port, ConnectionType, "LBR commander");
@@ -88,11 +92,19 @@ public class LBR_commander extends Node{
 	
 	@Override
 	public void run() {
-		Thread emergencystopthread = new MonitorEmergencyStopThread();
-		emergencystopthread.start();
+		// Also possible cause of lag - emergency stop thread is constantly started.
+		// Added:
+		if (startup) {
+			Thread emergencystopthread = new MonitorEmergencyStopThread();
+			emergencystopthread.start();
+
+			startup = false;
+		}
+		
 		
 		CommandedjointPos = lbr.getCurrentJointPosition();
-		
+
+		// Possible that this is the cause of lag? Constantly updating Commandstr.
 		while(isNodeRunning())
 		{   
 			String Commandstr = socket.receive_message(); 

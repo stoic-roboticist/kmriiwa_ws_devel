@@ -105,7 +105,7 @@ public class KMRiiwaSunriseApplication extends RoboticsAPIApplication{
 
 		// Configure robot;
 		controller = getController("KUKA_Sunrise_Cabinet_1");
-		kmp = getContext().getDeviceFromType(KmpOmniMove.class);		
+		kmp = getContext().getDeviceFromType(KmpOmniMove.class);
 		lbr = getContext().getDeviceFromType(LBR.class);
 
 		//lbr.moveAsync(ptpHome().setJointVelocityRel(0.5));
@@ -181,7 +181,7 @@ public class KMRiiwaSunriseApplication extends RoboticsAPIApplication{
 		System.out.println("Running app!");
 		
 		// Start all connected nodes
-		kmp_commander.setPriority(Thread.MAX_PRIORITY);
+		kmp_commander.setPriority(Thread.MAX_PRIORITY); // Remove?
 		lbr_commander.setPriority(Thread.MAX_PRIORITY);
 		
 		if(!(kmp_commander ==null)){
