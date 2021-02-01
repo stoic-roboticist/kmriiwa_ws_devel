@@ -125,6 +125,9 @@ public class LBR_commander extends Node{
 				if ((splt[0]).equals("pathPointLBR")){
 					addPointToSegment(Commandstr);
 					}
+				if ((splt[0]).equals("setLBRjointGoal")){
+					moveToJointPos(Commandstr);
+					}
 		}}
     }
 
@@ -218,6 +221,25 @@ public class LBR_commander extends Node{
 			jointAngle = Math.floor(lbr.getJointLimits().getMaxJointPosition().get(jointIndex)*100)/100;
 		}
 		return jointAngle;
+	}
+
+	private void moveToJointPos(String commandstr){
+		if(isNodeRunning() && !getEmergencyStop()){
+			// Declares state change.
+			API_ROS2_Sunrise.KMRiiwaSunriseApplication.StateChange = true;
+			String []splt = Commandstr.split(" ");		
+			for(int i = 0; i < jointCount ; ++i){
+				jPoses[i] = Double.parseDouble(commandstr[i+1]);
+			}
+			if(getisLBRMoving()){
+				currentmotion.cancel();
+			}
+			JointPosition targetJointPos = new JointPosition(jPoses);
+			PTPpoint jPosGoalPtp = new PTPpoint(targetJointPos);
+			CommandedjointPos.set(targetJointPos);
+			currentmotion = lbr.moveAsync(jPosGoalPtp.setJointVelocityRel(defaultVelocity));
+			setisLBRMoving(true);
+		}
 	}
 	
 	public class MonitorEmergencyStopThread extends Thread {

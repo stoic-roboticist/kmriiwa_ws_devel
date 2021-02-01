@@ -66,6 +66,7 @@ class LbrCommandsNode(Node):
 
         # Make a listener for relevant topics
         sub_manipulator_vel = self.create_subscription(String, 'manipulator_vel', self.manipulatorVel_callback, 10)
+        sub_joint_pos_goal = self.create_subscription(JointTrajectoryPoint, 'joint_pos_goal', self.jointPosGoal_callback, 10)
         sub_shutdown = self.create_subscription(String, 'shutdown', self.shutdown_callback, 10)
         sub_statusdata=self.create_subscription(LbrStatusdata, 'lbr_statusdata', self.status_callback, 10,callback_group=self.callback_group)
         self.path_server = ActionServer(self,MoveManipulator,'move_manipulator', self.move_manipulator_callback,callback_group=self.callback_group)
@@ -94,6 +95,11 @@ class LbrCommandsNode(Node):
 
     def manipulatorVel_callback(self, data):
         msg = 'setLBRmotion ' + data.data
+        self.soc.send(msg)
+
+    def jointPosGoal_callback(self, point):
+        positions = " ".join([str(s) for s in point.positions])
+        msg = 'setLBRjointGoal ' + positions
         self.soc.send(msg)
 
     def move_manipulator_callback(self, goal_handle):
