@@ -56,6 +56,7 @@
 #include <moveit_msgs/msg/motion_plan_response.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <kmr_msgs/action/plan_to_frame.hpp>
+#include <kmr_msgs/action/move_manipulator.hpp>
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "iostream"
 
@@ -98,6 +99,11 @@ public:
       std::bind(&RunMoveIt::handle_goal, this,  std::placeholders::_1,  std::placeholders::_2),
       std::bind(&RunMoveIt::handle_cancel, this,  std::placeholders::_1),
       std::bind(&RunMoveIt::handle_accepted, this,  std::placeholders::_1));
+      
+      // action client subscribed to MoveManipulator action server to send trajectory msgs
+      mp_action_client_ = rclcpp_action::create_client<kmr_msgs::action::MoveManipulator>(
+      node_,
+      "/move_manipulator");
 
     moveit_msgs::msg::CollisionObject collision_object;
     collision_object.header.frame_id = "base_footprint";
@@ -229,7 +235,29 @@ private:
       moveit_msgs::msg::RobotTrajectory robot_trajectory;
       plan_solution.trajectory->getRobotTrajectoryMsg(robot_trajectory);
       trajectory_publisher_->publish(robot_trajectory.joint_trajectory);
+      // Send joint trajectory to /move_manipulator action server
+      send_trajectory(robot_trajectory.joint_trajectory);
     }
+  }
+
+  void send_trajectory(const trajectory_msgs::msg::JointTrajectory& msg)
+  {
+    if (!mp_action_client_->wait_for_action_server())
+    {
+      RCLCPP_ERROR(LOGGER, "Action server not available after waiting");
+      RCLCPP_ERROR(LOGGER, "Could not send the trajectory to MoveManipulator action server");
+      return ;
+    }
+
+    auto goal_msg = kmr_msgs::action::MoveManipulator::Goal();
+    goal_msg.path = msg;
+    RCLCPP_INFO(LOGGER, "Sending goal");
+    auto send_goal_options = rclcpp_action::Client<kmr_msgs::action::MoveManipulator>::SendGoalOptions();
+    send_goal_options.goal_response_callback = std::bind(&RunMoveIt::goal_response_callback, this, std::placeholders::_1);
+    //send_goal_options.feedback_callback = std::bind(&RunMoveIt::feedback_callback, this, std::placeholder::_1, std::placeholder::_2);
+    send_goal_options.result_callback = std::bind(&RunMoveIt::result_callback, this, std::placeholders::_1);
+    
+    mp_action_client_->async_send_goal(goal_msg, send_goal_options);   
   }
 
   rclcpp_action::GoalResponse handle_goal(const rclcpp_action::GoalUUID & uuid,std::shared_ptr<const kmr_msgs::action::PlanToFrame::Goal> goal)
@@ -304,6 +332,8 @@ private:
         moveit_msgs::msg::RobotTrajectory robot_trajectory2;
         plan_solution.trajectory->getRobotTrajectoryMsg(robot_trajectory2);
         trajectory_publisher_->publish(robot_trajectory2.joint_trajectory);
+        // Send joint trajectory to /move_manipulator action server
+        send_trajectory(robot_trajectory.joint_trajectory);
         }
 
     }
@@ -314,6 +344,40 @@ private:
 
     }
   
+  }
+
+  void goal_response_callback(std::shared_future<rclcpp_action::ClientGoalHandle<kmr_msgs::action::MoveManipulator>::SharedPtr> future)
+  {
+    auto goal_handle = future.get();
+    if (!goal_handle) 
+    {
+      RCLCPP_ERROR(LOGGER, "Goal was rejected by server");
+    } 
+    else 
+    {
+      RCLCPP_INFO(LOGGER, "Goal accepted by server, waiting for result");
+    }
+  }
+
+  void result_callback(const rclcpp_action::ClientGoalHandle<kmr_msgs::action::MoveManipulator>::WrappedResult & result)
+  {
+    switch (result.code) 
+    {
+      case rclcpp_action::ResultCode::SUCCEEDED:
+        break;
+      
+      case rclcpp_action::ResultCode::ABORTED:
+        RCLCPP_ERROR(LOGGER, "Goal was aborted");
+        return;
+      
+      case rclcpp_action::ResultCode::CANCELED:
+        RCLCPP_ERROR(LOGGER, "Goal was canceled");
+        return;
+      
+      default:
+        RCLCPP_ERROR(LOGGER, "Unknown result code");
+        return;
+    }
   }
 
   rclcpp::Node::SharedPtr node_;
@@ -327,6 +391,7 @@ private:
   std::set<std::string> planning_pipeline_names;
   moveit::planning_interface::PlanningComponent::PlanRequestParameters default_parameters;
   rclcpp_action::Server<kmr_msgs::action::PlanToFrame>::SharedPtr action_server_;
+  rclcpp_action::Client<kmr_msgs::action::MoveManipulator>::SharedPtr mp_action_client_;
 };
 
 
