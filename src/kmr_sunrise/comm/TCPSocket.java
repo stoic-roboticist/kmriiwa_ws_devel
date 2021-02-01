@@ -38,7 +38,7 @@ public class TCPSocket implements ISocket{
 	{
 		while (true){
 			try{
-				String remotePC = "192.168.10.250";
+				String remotePC = "172.31.1.77";
 				//String NUC = "192.168.10.120";
 
 				TCPConn = new Socket(remotePC,COMport);

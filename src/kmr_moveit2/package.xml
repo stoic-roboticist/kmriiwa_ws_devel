@@ -22,6 +22,7 @@
   <build_depend>tf2</build_depend>
   <exec_depend>tf2</exec_depend>
   <depend>kmr_msgs</depend>
+  <depend>kmr_manipulator</depend>
   <depend>rclcpp_action</depend>
 
   <export>
